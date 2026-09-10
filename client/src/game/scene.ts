@@ -5,233 +5,225 @@ import { Vector3, Color3, Color4 } from "@babylonjs/core/Maths/math";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
-import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
+import { ShaderMaterial } from "@babylonjs/core/Materials/shaderMaterial";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { CRISES_DATA } from "./crisesData";
+
+export interface CrisisImpact {
+  crisisId: string;
+  balance: number;
+  label: string;
+}
 
 export interface GameHandle {
   scene: Scene;
   focusCrisis: (crisisId: string) => void;
   pulseCrisis: (crisisId: string) => void;
+  updateImpacts: (impacts: CrisisImpact[]) => void;
   dispose: () => void;
+}
+
+const EARTH_TEXTURE = "/manus-storage/earth_blue_marble_nasa_3368a8fe.jpg";
+
+const COLOR_VERTEX_SHADER = `
+  precision highp float;
+  attribute vec3 position;
+  uniform mat4 world;
+  uniform mat4 view;
+  uniform mat4 projection;
+  void main(void) {
+    gl_Position = projection * view * world * vec4(position, 1.0);
+  }
+`;
+
+const COLOR_FRAGMENT_SHADER = `
+  precision highp float;
+  uniform vec3 color;
+  uniform float alpha;
+  void main(void) {
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+function createColorMaterial(name: string, scene: Scene, color: Color3, alpha = 1) {
+  const material = new ShaderMaterial(name, scene, {
+    vertexSource: COLOR_VERTEX_SHADER,
+    fragmentSource: COLOR_FRAGMENT_SHADER,
+  }, {
+    attributes: ["position"],
+    uniforms: ["world", "view", "projection", "color", "alpha"],
+  });
+  material.setColor3("color", color);
+  material.setFloat("alpha", alpha);
+  material.alpha = alpha;
+  return material;
+}
+
+function latLngToPosition(lat: number, lng: number, radius: number) {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
+  return new Vector3(
+    -(radius * Math.sin(phi) * Math.cos(theta)),
+    radius * Math.cos(phi),
+    radius * Math.sin(phi) * Math.sin(theta),
+  );
 }
 
 export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement): Promise<GameHandle> {
   const scene = new Scene(engine);
-  scene.clearColor = new Color4(0.02, 0.04, 0.09, 1);
+  scene.clearColor = new Color4(0.008, 0.018, 0.045, 1);
 
-  // Tactical camera
-  const camera = new ArcRotateCamera("TacticalCam", -Math.PI / 1.7, Math.PI / 2.3, 11, new Vector3(0, 0, 0), scene);
+  const camera = new ArcRotateCamera("EarthCamera", -Math.PI / 1.72, Math.PI / 2.35, 10.5, Vector3.Zero(), scene);
   camera.attachControl(canvas, true);
-  camera.lowerRadiusLimit = 6.5;
+  camera.lowerRadiusLimit = 6.8;
   camera.upperRadiusLimit = 16;
-  camera.wheelPrecision = 45;
+  camera.wheelPrecision = 38;
+  camera.panningSensibility = 0;
 
-  // Lighting
-  const hemiLight = new HemisphericLight("ambient", new Vector3(0, 1, 0), scene);
-  hemiLight.intensity = 0.8;
-  hemiLight.groundColor = new Color3(0.05, 0.09, 0.18);
+  const hemi = new HemisphericLight("earthAmbient", new Vector3(0, 1, 0), scene);
+  hemi.intensity = 0.52;
+  hemi.groundColor = new Color3(0.01, 0.03, 0.08);
+  const sun = new DirectionalLight("sunLight", new Vector3(-0.6, -0.25, -1), scene);
+  sun.intensity = 2.1;
+  sun.diffuse = new Color3(1, 0.96, 0.88);
 
-  const sunLight = new DirectionalLight("sun", new Vector3(-1, -0.6, -1), scene);
-  sunLight.intensity = 1.4;
-  sunLight.diffuse = new Color3(0.85, 0.95, 1);
+  // Photorealistic equirectangular NASA Blue Marble surface.
+  const earth = MeshBuilder.CreateSphere("EarthBlueMarble", { diameter: 6.2, segments: 64 }, scene);
+  const earthTexture = new Texture(EARTH_TEXTURE, scene, true, false);
+  const earthMat = new ShaderMaterial("EarthSatelliteShader", scene, {
+    vertexSource: `
+      precision highp float;
+      attribute vec3 position;
+      attribute vec2 uv;
+      uniform mat4 world;
+      uniform mat4 view;
+      uniform mat4 projection;
+      varying vec2 vUV;
+      void main(void) {
+        vUV = uv;
+        gl_Position = projection * view * world * vec4(position, 1.0);
+      }
+    `,
+    fragmentSource: `
+      precision highp float;
+      varying vec2 vUV;
+      uniform sampler2D earthSampler;
+      void main(void) {
+        vec4 color = texture2D(earthSampler, vUV);
+        gl_FragColor = vec4(color.rgb * 1.08, 1.0);
+      }
+    `,
+  }, {
+    attributes: ["position", "uv"],
+    uniforms: ["world", "view", "projection"],
+    samplers: ["earthSampler"],
+  });
+  earthMat.setTexture("earthSampler", earthTexture);
+  earth.material = earthMat;
 
-  // Earth Globe
-  const globe = MeshBuilder.CreateSphere("EarthGlobe", { diameter: 6.2, segments: 64 }, scene);
-  const globeMaterial = new StandardMaterial("GlobeMat", scene);
+  // Thin blue atmosphere shell.
+  const atmosphere = MeshBuilder.CreateSphere("EarthAtmosphere", { diameter: 6.42, segments: 48 }, scene);
+  const atmosphereMat = createColorMaterial("AtmosphereMaterial", scene, new Color3(0.04, 0.16, 0.42), 0.12);
+  atmosphereMat.backFaceCulling = false;
+  atmosphere.material = atmosphereMat;
 
-  const res = 2048;
-  const dynTexture = new DynamicTexture("EarthTexture", { width: res, height: res / 2 }, scene, false);
-  const ctx = dynTexture.getContext();
+  // Back orbital ring makes the Earth read as a tactical simulation without changing the planet texture.
+  const ring = MeshBuilder.CreateTorus("OrbitRing", { diameter: 7.5, thickness: 0.018, tessellation: 96 }, scene);
+  const ringMat = createColorMaterial("OrbitRingMaterial", scene, new Color3(0.08, 0.55, 1), 0.38);
+  ring.material = ringMat;
+  ring.rotation.x = Math.PI / 3;
+  ring.rotation.z = 0.16;
 
-  // Oceans deep tactical navy gradient
-  const oceanGrad = ctx.createLinearGradient(0, 0, 0, res / 2);
-  oceanGrad.addColorStop(0, "#08162b");
-  oceanGrad.addColorStop(1, "#030a16");
-  ctx.fillStyle = oceanGrad;
-  ctx.fillRect(0, 0, res, res / 2);
-
-  // Subtle lat/long coordinate grid
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
-  ctx.lineWidth = 1.5;
-  for (let lat = 0; lat <= res / 2; lat += (res / 2) / 18) {
-    ctx.beginPath();
-    ctx.moveTo(0, lat);
-    ctx.lineTo(res, lat);
-    ctx.stroke();
-  }
-  for (let lon = 0; lon <= res; lon += res / 36) {
-    ctx.beginPath();
-    ctx.moveTo(lon, 0);
-    ctx.lineTo(lon, res / 2);
-    ctx.stroke();
-  }
-
-  // Draw enhanced continent shapes
-  ctx.fillStyle = "#16385c";
-  ctx.strokeStyle = "#38bdf8";
-  ctx.lineWidth = 3;
-
-  const toUV = (lon: number, lat: number): [number, number] => {
-    return [(lon / 360 + 0.5) * res, (-lat / 180 + 0.5) * (res / 2)];
-  };
-
-  const drawContour = (coords: [number, number][]) => {
-    ctx.beginPath();
-    coords.forEach(([lon, lat], i) => {
-      const [u, v] = toUV(lon, lat);
-      if (i === 0) ctx.moveTo(u, v);
-      else ctx.lineTo(u, v);
-    });
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  };
-
-  // South America (Brazil prominent)
-  drawContour([
-    [-81, 8], [-77, 10], [-68, 12], [-61, 10], [-50, -1], [-35, -5],
-    [-35, -9], [-39, -15], [-41, -22], [-48, -28], [-53, -33], [-58, -38],
-    [-65, -45], [-68, -55], [-74, -52], [-76, -42], [-81, -5], [-81, 8]
-  ]);
-
-  // North America
-  drawContour([
-    [-168, 65], [-140, 70], [-100, 73], [-65, 60], [-55, 48], [-70, 42],
-    [-75, 35], [-80, 25], [-82, 23], [-97, 26], [-97, 20], [-105, 23],
-    [-115, 32], [-124, 48], [-130, 55], [-160, 58], [-168, 65]
-  ]);
-
-  // Africa
-  drawContour([
-    [-17, 32], [0, 36], [12, 37], [25, 32], [33, 28], [43, 12],
-    [51, 11], [42, -5], [35, -20], [30, -34], [18, -34], [12, -18],
-    [8, 4], [-15, 11], [-17, 32]
-  ]);
-
-  // Eurasia
-  drawContour([
-    [-9, 38], [15, 42], [30, 41], [40, 60], [60, 68], [100, 72],
-    [140, 70], [170, 66], [142, 50], [130, 38], [120, 25], [108, 12],
-    [80, 13], [70, 24], [55, 25], [45, 37], [30, 31], [25, 38],
-    [0, 44], [-9, 38]
-  ]);
-
-  // Australia
-  drawContour([
-    [114, -22], [130, -13], [142, -11], [153, -28], [150, -37],
-    [138, -36], [128, -32], [115, -34], [114, -22]
-  ]);
-
-  dynTexture.update();
-
-  globeMaterial.diffuseTexture = dynTexture;
-  globeMaterial.specularColor = new Color3(0.2, 0.4, 0.6);
-  globeMaterial.emissiveColor = new Color3(0.05, 0.1, 0.18);
-  globe.material = globeMaterial;
-
-  // Atmosphere Glow
-  const atmosphere = MeshBuilder.CreateSphere("Atmosphere", { diameter: 6.45, segments: 48 }, scene);
-  const atmoMaterial = new StandardMaterial("AtmoMat", scene);
-  atmoMaterial.alpha = 0.2;
-  atmoMaterial.diffuseColor = new Color3(0.3, 0.7, 1);
-  atmoMaterial.emissiveColor = new Color3(0.1, 0.4, 0.8);
-  atmoMaterial.backFaceCulling = false;
-  atmosphere.material = atmoMaterial;
-
-  // Orbital UI rings
-  const ring1 = MeshBuilder.CreateTorus("Ring1", { diameter: 7.4, thickness: 0.02, tessellation: 64 }, scene);
-  const ringMat1 = new StandardMaterial("RingMat1", scene);
-  ringMat1.emissiveColor = new Color3(0.2, 0.8, 1);
-  ringMat1.alpha = 0.4;
-  ring1.material = ringMat1;
-  ring1.rotation.x = Math.PI / 3;
-
-  // Crisis Markers
-  const crisisMarkers: Map<string, { mesh: Mesh; lat: number; lng: number }> = new Map();
-  const radius = 3.12;
+  const markerMeshes = new Map<string, Mesh>();
+  const impactRings = new Map<string, Mesh>();
+  const markerMaterials = new Map<string, ShaderMaterial>();
+  const crisisMarkers = new Map<string, { lat: number; lng: number }>();
+  const markerRadius = 3.16;
 
   CRISES_DATA.forEach((crisis) => {
-    const phi = (90 - crisis.coordinates.lat) * (Math.PI / 180);
-    const theta = (crisis.coordinates.lng + 180) * (Math.PI / 180);
+    const position = latLngToPosition(crisis.coordinates.lat, crisis.coordinates.lng, markerRadius);
+    const marker = MeshBuilder.CreateCylinder(`crisisBeacon_${crisis.id}`, {
+      height: 0.52, diameterTop: 0.22, diameterBottom: 0.035, tessellation: 16,
+    }, scene);
+    marker.position = position;
+    marker.lookAt(Vector3.Zero());
+    marker.rotate(new Vector3(1, 0, 0), -Math.PI / 2);
 
-    const x = -(radius * Math.sin(phi) * Math.cos(theta));
-    const z = radius * Math.sin(phi) * Math.sin(theta);
-    const y = radius * Math.cos(phi);
+    const material = createColorMaterial(`crisisBeaconMaterial_${crisis.id}`, scene, new Color3(1, 0.33, 0.08));
+    marker.material = material;
 
-    // Beveled beacon cylinder
-    const beacon = MeshBuilder.CreateCylinder(`beacon_${crisis.id}`, { height: 0.6, diameterTop: 0.25, diameterBottom: 0.05 }, scene);
-    beacon.position = new Vector3(x, y, z);
-    beacon.lookAt(new Vector3(0, 0, 0));
-    beacon.rotate(new Vector3(1, 0, 0), -Math.PI / 2);
+    const ringMesh = MeshBuilder.CreateTorus(`impactRing_${crisis.id}`, { diameter: 0.52, thickness: 0.028, tessellation: 32 }, scene);
+    ringMesh.position = position.scale(1.008);
+    ringMesh.lookAt(Vector3.Zero());
+    const ringMaterial = createColorMaterial(`impactRingMaterial_${crisis.id}`, scene, new Color3(1, 0.5, 0.08), 0.8);
+    ringMesh.material = ringMaterial;
 
-    const mat = new StandardMaterial(`beaconMat_${crisis.id}`, scene);
-    if (crisis.category === 'flood' || crisis.category === 'sealevel') {
-      mat.emissiveColor = new Color3(0.2, 0.8, 1);
-    } else if (crisis.category === 'wildfire' || crisis.category === 'heatwave') {
-      mat.emissiveColor = new Color3(1, 0.3, 0.1);
-    } else if (crisis.category === 'drought') {
-      mat.emissiveColor = new Color3(1, 0.75, 0.1);
-    } else {
-      mat.emissiveColor = new Color3(0.2, 0.9, 0.4);
-    }
-    beacon.material = mat;
-
-    // Small pulsating halo disc
-    const halo = MeshBuilder.CreateDisc(`halo_${crisis.id}`, { radius: 0.22, tessellation: 24 }, scene);
-    halo.position = new Vector3(x * 1.01, y * 1.01, z * 1.01);
-    halo.lookAt(new Vector3(0, 0, 0));
-    const haloMat = new StandardMaterial(`haloMat_${crisis.id}`, scene);
-    haloMat.emissiveColor = mat.emissiveColor;
-    haloMat.alpha = 0.7;
-    halo.material = haloMat;
-
-    crisisMarkers.set(crisis.id, { mesh: beacon, lat: crisis.coordinates.lat, lng: crisis.coordinates.lng });
+    markerMeshes.set(crisis.id, marker);
+    impactRings.set(crisis.id, ringMesh);
+    markerMaterials.set(crisis.id, material);
+    crisisMarkers.set(crisis.id, { lat: crisis.coordinates.lat, lng: crisis.coordinates.lng });
   });
 
-  // Slow ambient rotation
   let autoRotate = true;
+  let pulseIndex = 0;
   scene.onBeforeRenderObservable.add(() => {
     if (autoRotate) {
-      globe.rotation.y += 0.0012;
-      atmosphere.rotation.y += 0.0015;
-      ring1.rotation.z += 0.0008;
+      earth.rotation.y += 0.0008;
+      atmosphere.rotation.y += 0.001;
+      ring.rotation.z += 0.0007;
     }
+    const t = performance.now() / 420;
+    impactRings.forEach((impactRing) => {
+      const pulse = 1 + Math.sin(t + pulseIndex) * 0.12;
+      impactRing.scaling.set(pulse, pulse, pulse);
+      pulseIndex += 1;
+    });
+    pulseIndex = 0;
   });
 
-  // Camera focus on crisis
   const focusCrisis = (crisisId: string) => {
     const target = crisisMarkers.get(crisisId);
     if (!target) return;
     autoRotate = false;
-
-    // Center camera on coordinate
     const targetAlpha = -((target.lng * Math.PI) / 180) - Math.PI / 2;
     const targetBeta = ((90 - target.lat) * Math.PI) / 180;
-
     camera.alpha = targetAlpha;
-    camera.beta = Math.max(0.3, Math.min(Math.PI - 0.3, targetBeta));
-    camera.radius = 8.8;
-
+    camera.beta = Math.max(0.26, Math.min(Math.PI - 0.26, targetBeta));
+    camera.radius = 8.5;
     pulseCrisis(crisisId);
   };
 
   const pulseCrisis = (crisisId: string) => {
-    const target = crisisMarkers.get(crisisId);
-    if (!target) return;
-    target.mesh.scaling.set(2.4, 2.4, 2.4);
-    setTimeout(() => {
-      target.mesh.scaling.set(1, 1, 1);
-    }, 500);
+    const marker = markerMeshes.get(crisisId);
+    if (!marker) return;
+    marker.scaling.set(2.3, 2.3, 2.3);
+    setTimeout(() => marker.scaling.set(1, 1, 1), 480);
   };
+
+  const updateImpacts = (impacts: CrisisImpact[]) => {
+    impacts.forEach((impact) => {
+      const material = markerMaterials.get(impact.crisisId);
+      const ringMesh = impactRings.get(impact.crisisId);
+      if (!material || !ringMesh) return;
+      const positive = impact.balance >= 0;
+      material.setColor3("color", positive ? new Color3(0.1, 1, 0.4) : new Color3(1, 0.16, 0.08));
+      const ringMaterial = ringMesh.material as ShaderMaterial;
+      ringMaterial.setColor3("color", positive ? new Color3(0.1, 1, 0.4) : new Color3(1, 0.16, 0.08));
+      ringMesh.scaling.set(positive ? 1.45 : 1.15, positive ? 1.45 : 1.15, positive ? 1.45 : 1.15);
+    });
+  };
+
+  scene.onPointerObservable.add((pointerInfo) => {
+    if (pointerInfo.type === 1) autoRotate = false;
+    if (pointerInfo.type === 2) setTimeout(() => { autoRotate = true; }, 2500);
+  });
 
   return {
     scene,
     focusCrisis,
     pulseCrisis,
-    dispose: () => {
-      scene.dispose();
-    }
+    updateImpacts,
+    dispose: () => scene.dispose(),
   };
 }

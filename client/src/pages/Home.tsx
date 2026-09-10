@@ -7,6 +7,7 @@ import ScienceFairSurveyModal from '@/components/ScienceFairSurveyModal';
 import VictoryReportModal from '@/components/VictoryReportModal';
 import { CRISES_DATA } from '@/game/crisesData';
 import { PlayerResources, DecisionOption, FinalRank } from '@/game/types';
+import type { CrisisImpact } from '@/game/scene';
 import { sounds } from '@/game/soundEffects';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,8 @@ export default function Home() {
 
   const [resources, setResources] = useState<PlayerResources>(initialResources);
   const [currentCrisisIdx, setCurrentCrisisIdx] = useState<number>(0);
+  const [impacts, setImpacts] = useState<CrisisImpact[]>([]);
+  const [decisionHistory, setDecisionHistory] = useState<Array<{ crisisId: string; crisisName: string; action: string; balance: number; result: string }>>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Modals state
@@ -84,6 +87,17 @@ export default function Home() {
       sustainability: newSust,
       xp: newXP
     }));
+
+    const balance = option.deltaPopulation + option.deltaSustainability * 2 + option.deltaXP / 2 - option.costFinance / 3;
+    const result = balance >= 180 ? 'Recuperação forte' : balance >= 90 ? 'Equilíbrio positivo' : 'Resposta de alto custo';
+    setImpacts((prev) => [
+      ...prev.filter((impact) => impact.crisisId !== currentCrisis.id),
+      { crisisId: currentCrisis.id, balance, label: result },
+    ]);
+    setDecisionHistory((prev) => [
+      ...prev,
+      { crisisId: currentCrisis.id, crisisName: currentCrisis.name, action: option.title, balance, result },
+    ]);
 
     // Check unexpected event (Carta de Evento - PDR item 8)
     const shouldTriggerEvent = Math.random() < 0.65;
@@ -146,6 +160,8 @@ export default function Home() {
     setResources(initialResources);
     setCurrentCrisisIdx(0);
     setKnowledgeCompletedForCurrent(false);
+    setImpacts([]);
+    setDecisionHistory([]);
     setIsGameOver(false);
     sounds.playClick();
   };
@@ -261,7 +277,7 @@ export default function Home() {
         {/* Left Side: 3D Globe & Spatial Information */}
         <section className="lg:col-span-5 flex flex-col gap-4">
           <div className="h-[380px] w-full">
-            <GlobeCanvas activeCrisisId={currentCrisis.id} />
+            <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
           </div>
 
           {/* Crisis Pipeline & Map Legend */}
@@ -297,6 +313,29 @@ export default function Home() {
                 );
               })}
             </div>
+          </div>
+
+          <div className="bg-slate-900/80 border border-emerald-900/40 rounded-xl p-4 text-xs">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-bold uppercase tracking-wider text-emerald-300">IMPACTO DAS SUAS ESCOLHAS</span>
+              <span className="text-slate-500 font-mono">{decisionHistory.length} decisões registradas</span>
+            </div>
+            {decisionHistory.length === 0 ? (
+              <p className="text-slate-500 leading-relaxed">As regiões do globo mudarão de cor depois de cada decisão. Verde indica recuperação; vermelho indica que o risco ainda está alto.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {decisionHistory.slice(-3).reverse().map((item) => (
+                  <div key={`${item.crisisId}-${item.action}`} className="rounded-lg bg-slate-950/60 border border-slate-800 p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-200 truncate">{item.crisisName}</span>
+                      <span className={item.balance >= 0 ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>{item.balance >= 0 ? '+' : ''}{Math.round(item.balance)}</span>
+                    </div>
+                    <p className="text-slate-400 mt-1 truncate">{item.action}</p>
+                    <span className="text-[10px] text-sky-300">{item.result}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
