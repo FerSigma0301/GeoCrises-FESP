@@ -81,6 +81,15 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   camera.wheelPrecision = 38;
   camera.panningSensibility = 0;
 
+  let cameraGoal: { alpha: number; beta: number; radius: number } | null = null;
+
+  const shortestAngleDelta = (from: number, to: number) => {
+    let delta = (to - from) % (Math.PI * 2);
+    if (delta > Math.PI) delta -= Math.PI * 2;
+    if (delta < -Math.PI) delta += Math.PI * 2;
+    return delta;
+  };
+
   const hemi = new HemisphericLight("earthAmbient", new Vector3(0, 1, 0), scene);
   hemi.intensity = 0.52;
   hemi.groundColor = new Color3(0.01, 0.03, 0.08);
@@ -170,6 +179,24 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   let autoRotate = true;
   let pulseIndex = 0;
   scene.onBeforeRenderObservable.add(() => {
+    if (cameraGoal) {
+      const deltaTime = scene.getEngine().getDeltaTime();
+      const smoothing = 1 - Math.exp(-deltaTime / 220);
+      camera.alpha += shortestAngleDelta(camera.alpha, cameraGoal.alpha) * smoothing;
+      camera.beta += (cameraGoal.beta - camera.beta) * smoothing;
+      camera.radius += (cameraGoal.radius - camera.radius) * smoothing;
+
+      if (
+        Math.abs(shortestAngleDelta(camera.alpha, cameraGoal.alpha)) < 0.001 &&
+        Math.abs(camera.beta - cameraGoal.beta) < 0.001 &&
+        Math.abs(camera.radius - cameraGoal.radius) < 0.01
+      ) {
+        camera.alpha = cameraGoal.alpha;
+        camera.beta = cameraGoal.beta;
+        camera.radius = cameraGoal.radius;
+        cameraGoal = null;
+      }
+    }
     if (autoRotate) {
       earth.rotation.y += 0.0008;
       atmosphere.rotation.y += 0.001;
@@ -188,11 +215,14 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     const target = crisisMarkers.get(crisisId);
     if (!target) return;
     autoRotate = false;
-    const targetAlpha = -((target.lng * Math.PI) / 180) - Math.PI / 2;
-    const targetBeta = ((90 - target.lat) * Math.PI) / 180;
-    camera.alpha = targetAlpha;
-    camera.beta = Math.max(0.26, Math.min(Math.PI - 0.26, targetBeta));
-    camera.radius = 8.5;
+    const targetPosition = latLngToPosition(target.lat, target.lng, 1).normalize();
+    const targetAlpha = Math.atan2(targetPosition.z, targetPosition.x);
+    const targetBeta = Math.acos(Math.max(-1, Math.min(1, targetPosition.y)));
+    cameraGoal = {
+      alpha: targetAlpha,
+      beta: Math.max(0.26, Math.min(Math.PI - 0.26, targetBeta)),
+      radius: 8.5,
+    };
     pulseCrisis(crisisId);
   };
 
@@ -217,7 +247,10 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   };
 
   scene.onPointerObservable.add((pointerInfo) => {
-    if (pointerInfo.type === 1) autoRotate = false;
+    if (pointerInfo.type === 1) {
+      autoRotate = false;
+      cameraGoal = null;
+    }
     if (pointerInfo.type === 2) setTimeout(() => { autoRotate = true; }, 2500);
   });
 
