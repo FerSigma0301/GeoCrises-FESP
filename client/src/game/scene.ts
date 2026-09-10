@@ -146,6 +146,7 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     const marker = MeshBuilder.CreateCylinder(`crisisBeacon_${crisis.id}`, {
       height: 0.52, diameterTop: 0.22, diameterBottom: 0.035, tessellation: 16,
     }, scene);
+    marker.parent = earth;
     marker.position = position;
     marker.lookAt(Vector3.Zero());
     marker.rotate(new Vector3(1, 0, 0), -Math.PI / 2);
@@ -154,6 +155,7 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     marker.material = material;
 
     const ringMesh = MeshBuilder.CreateTorus(`impactRing_${crisis.id}`, { diameter: 0.52, thickness: 0.028, tessellation: 32 }, scene);
+    ringMesh.parent = earth;
     ringMesh.position = position.scale(1.008);
     ringMesh.lookAt(Vector3.Zero());
     const ringMaterial = createColorMaterial(`impactRingMaterial_${crisis.id}`, scene, new Color3(1, 0.5, 0.08), 0.8);
