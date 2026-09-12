@@ -20,6 +20,17 @@ export interface DecisionOption {
   scientificFeedback: string;
 }
 
+export interface RevenueOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  tag: 'comunidade' | 'ciência' | 'mercado' | 'natureza';
+  rewardFinance: number;
+  costXP: number;
+  deltaPopulation: number;
+  deltaSustainability: number;
+}
+
 export interface CrisisCard {
   id: string;
   name: string;

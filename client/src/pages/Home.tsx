@@ -6,7 +6,7 @@ import EventCardModal from '@/components/EventCardModal';
 import ScienceFairSurveyModal from '@/components/ScienceFairSurveyModal';
 import VictoryReportModal from '@/components/VictoryReportModal';
 import { CRISES_DATA } from '@/game/crisesData';
-import { PlayerResources, DecisionOption, FinalRank } from '@/game/types';
+import { PlayerResources, DecisionOption, FinalRank, RevenueOpportunity } from '@/game/types';
 import type { CrisisImpact } from '@/game/scene';
 import { sounds } from '@/game/soundEffects';
 import { Badge } from '@/components/ui/badge';
@@ -16,17 +16,29 @@ import {
   BarChart2,
   CheckCircle2,
   DollarSign,
+  FlaskConical,
   Gauge,
+  HandCoins,
   Heart,
   HelpCircle,
   Leaf,
   RotateCcw,
+  Recycle,
   Sparkles,
   Users,
   Volume2,
   VolumeX,
   Zap
 } from 'lucide-react';
+
+const REVENUE_OPPORTUNITIES: RevenueOpportunity[] = [
+  { id: 'green-bonds', title: 'Emitir Títulos Verdes', description: 'Capte investimento privado para financiar adaptação climática com metas transparentes.', tag: 'mercado', rewardFinance: 340, costXP: 70, deltaPopulation: 20, deltaSustainability: 8 },
+  { id: 'science-grant', title: 'Bolsa de Inovação Científica', description: 'Converta dados da simulação em pesquisa aplicada e atraia um fundo de ciência aberta.', tag: 'ciência', rewardFinance: 260, costXP: 45, deltaPopulation: 10, deltaSustainability: 12 },
+  { id: 'community-coop', title: 'Cooperativa de Resiliência', description: 'Gere renda local com monitoramento, manutenção e serviços prestados pela comunidade.', tag: 'comunidade', rewardFinance: 220, costXP: 30, deltaPopulation: 55, deltaSustainability: 10 },
+  { id: 'circular-economy', title: 'Economia Circular de Emergência', description: 'Transforme resíduos e materiais recuperados em recursos para a próxima resposta.', tag: 'natureza', rewardFinance: 180, costXP: 25, deltaPopulation: 15, deltaSustainability: 24 },
+];
+
+const OPPORTUNITY_ICONS = { mercado: HandCoins, ciência: FlaskConical, comunidade: Sparkles, natureza: Recycle };
 
 export default function Home() {
   // PDR Initial Resources (Item 7):
@@ -44,6 +56,7 @@ export default function Home() {
   const [currentCrisisIdx, setCurrentCrisisIdx] = useState<number>(0);
   const [impacts, setImpacts] = useState<CrisisImpact[]>([]);
   const [decisionHistory, setDecisionHistory] = useState<Array<{ crisisId: string; crisisName: string; action: string; balance: number; result: string }>>([]);
+  const [claimedOpportunities, setClaimedOpportunities] = useState<string[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Modals state
@@ -75,6 +88,23 @@ export default function Home() {
     sounds.enabled = !soundEnabled;
     if (soundEnabled) sounds.stopMusic();
     setSoundEnabled(!soundEnabled);
+  };
+
+  const handleRevenueOpportunity = (opportunity: RevenueOpportunity) => {
+    if (claimedOpportunities.includes(opportunity.id)) return;
+    if (resources.xp < opportunity.costXP) {
+      sounds.playWarning();
+      return;
+    }
+    sounds.playSuccess();
+    setClaimedOpportunities((prev) => [...prev, opportunity.id]);
+    setResources((prev) => ({
+      ...prev,
+      finance: prev.finance + opportunity.rewardFinance,
+      xp: prev.xp - opportunity.costXP,
+      populationProtected: prev.populationProtected + opportunity.deltaPopulation,
+      sustainability: Math.max(0, prev.sustainability + opportunity.deltaSustainability),
+    }));
   };
 
   const handleSelectDecision = (option: DecisionOption) => {
@@ -165,6 +195,7 @@ export default function Home() {
     setKnowledgeCompletedForCurrent(false);
     setImpacts([]);
     setDecisionHistory([]);
+    setClaimedOpportunities([]);
     setIsGameOver(false);
     sounds.playClick();
   };
@@ -297,6 +328,43 @@ export default function Home() {
             <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-mono">
               <span>{decisionHistory.length} decisões registradas</span>
               <span>{resources.lives > 0 ? 'Capacidade operacional estável' : 'Capacidade esgotada'}</span>
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-2xl border border-amber-900/60 p-4">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300"><DollarSign className="h-3.5 w-3.5" /> Economia de resiliência</div>
+                <p className="mt-1 text-sm font-semibold text-white">Crie recursos sem abandonar seus valores</p>
+              </div>
+              <Sparkles className="h-5 w-5 text-amber-300" />
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {REVENUE_OPPORTUNITIES.map((opportunity) => {
+                const Icon = OPPORTUNITY_ICONS[opportunity.tag];
+                const claimed = claimedOpportunities.includes(opportunity.id);
+                const affordable = resources.xp >= opportunity.costXP;
+                return (
+                  <button
+                    key={opportunity.id}
+                    type="button"
+                    disabled={claimed}
+                    onClick={() => handleRevenueOpportunity(opportunity)}
+                    className={`group rounded-xl border p-3 text-left transition-all duration-200 ${claimed ? 'border-emerald-500/30 bg-emerald-950/20 opacity-70' : affordable ? 'border-slate-800 bg-slate-950/60 hover:-translate-y-0.5 hover:border-amber-500/60 hover:bg-amber-950/20' : 'border-slate-800/70 bg-slate-950/40 opacity-60'}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className={`rounded-lg p-1.5 ${claimed ? 'bg-emerald-400/10 text-emerald-300' : 'bg-amber-400/10 text-amber-300'}`}><Icon className="h-4 w-4" /></span>
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-slate-500">{opportunity.tag}</span>
+                    </div>
+                    <p className="mt-2 text-xs font-bold text-white">{opportunity.title}</p>
+                    <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-slate-400">{opportunity.description}</p>
+                    <div className="mt-2 flex items-center justify-between border-t border-slate-800 pt-2 text-[10px] font-mono">
+                      <span className="text-amber-300">+{opportunity.rewardFinance} fin.</span>
+                      <span className={claimed ? 'text-emerald-300' : affordable ? 'text-purple-300' : 'text-rose-300'}>{claimed ? 'RESGATADO' : `-${opportunity.costXP} XP`}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
