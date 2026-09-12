@@ -1,6 +1,6 @@
 import { CrisisCard } from './types';
 
-export const CRISES_DATA: CrisisCard[] = [
+const CRISES_DATA_BASE: CrisisCard[] = [
   {
     id: 'crisis-flood-1',
     name: 'Enchente Urbana e Cheia Fluvial',
@@ -1150,6 +1150,18 @@ export const CRISES_DATA: CrisisCard[] = [
     }
   }
 ];
+
+// Nova sequência: da pressão hídrica e alimentar até crises extremas e sistêmicas.
+const CAMPAIGN_ORDER = [
+  'crisis-drought-1', 'crisis-agri-1', 'crisis-flood-1', 'crisis-landslide-1',
+  'crisis-deforest-1', 'crisis-fire-1', 'crisis-heat-1', 'crisis-sea-1',
+  'crisis-displacement-1', 'crisis-cyclone-1', 'crisis-volcano-1',
+  'crisis-earthquake-1', 'crisis-pollution-1', 'crisis-biodiversity-1', 'crisis-pandemic-1',
+] as const;
+
+export const CRISES_DATA: CrisisCard[] = CAMPAIGN_ORDER
+  .map((id) => CRISES_DATA_BASE.find((crisis) => crisis.id === id))
+  .filter((crisis): crisis is CrisisCard => Boolean(crisis));
 
 export const SURVEY_QUESTIONS = [
   {

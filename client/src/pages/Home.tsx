@@ -41,6 +41,8 @@ const REVENUE_OPPORTUNITIES: RevenueOpportunity[] = [
   { id: 'science-grant', title: 'Bolsa de Inovação Científica', description: 'Converta dados da simulação em pesquisa aplicada e atraia um fundo de ciência aberta.', tag: 'ciência', rewardFinance: 260, costXP: 45, deltaPopulation: 10, deltaSustainability: 12 },
   { id: 'community-coop', title: 'Cooperativa de Resiliência', description: 'Gere renda local com monitoramento, manutenção e serviços prestados pela comunidade.', tag: 'comunidade', rewardFinance: 220, costXP: 30, deltaPopulation: 55, deltaSustainability: 10 },
   { id: 'circular-economy', title: 'Economia Circular de Emergência', description: 'Transforme resíduos e materiais recuperados em recursos para a próxima resposta.', tag: 'natureza', rewardFinance: 180, costXP: 25, deltaPopulation: 15, deltaSustainability: 24 },
+  { id: 'parametric-insurance', title: 'Seguro Paramétrico Climático', description: 'Antecipe liquidez com uma apólice acionada automaticamente quando os sensores confirmarem o evento.', tag: 'mercado', rewardFinance: 420, costXP: 95, deltaPopulation: 25, deltaSustainability: 6 },
+  { id: 'open-data-license', title: 'Licença de Dados Abertos', description: 'Compartilhe inteligência territorial com universidades e atraia royalties para a operação.', tag: 'ciência', rewardFinance: 380, costXP: 80, deltaPopulation: 15, deltaSustainability: 16 },
 ];
 
 const OPPORTUNITY_ICONS = { mercado: HandCoins, ciência: FlaskConical, comunidade: Sparkles, natureza: Recycle };
@@ -49,6 +51,7 @@ const RISK_CONTRACTS: RiskContract[] = [
   { id: 'rapid-response', title: 'Corredor de Resposta Rápida', brief: 'Proteja uma área crítica antes que a próxima onda de risco atinja o território.', stake: 120, reward: 520, threshold: 170, penaltyFinance: 220, penaltyLives: 1, penaltySustainability: 6 },
   { id: 'resilience-bond', title: 'Bônus de Resiliência Territorial', brief: 'Prometa um salto de sustentabilidade e atraia capital paciente para a operação.', stake: 180, reward: 760, threshold: 210, penaltyFinance: 300, penaltyLives: 0, penaltySustainability: 14 },
   { id: 'global-challenge', title: 'Desafio Global de Inovação', brief: 'Concorra com outras cidades por um prêmio internacional de adaptação climática.', stake: 90, reward: 430, threshold: 135, penaltyFinance: 160, penaltyLives: 0, penaltySustainability: 10 },
+  { id: 'all-in-resilience', title: 'Pacto All-in de Resiliência', brief: 'Aposte uma reserva massiva em uma transformação territorial de alto risco e alto retorno.', stake: 680, reward: 1850, threshold: 300, penaltyFinance: 520, penaltyLives: 1, penaltySustainability: 20 },
 ];
 
 const MARKET_OFFERS: MarketOffer[] = [
@@ -56,6 +59,8 @@ const MARKET_OFFERS: MarketOffer[] = [
   { id: 'clean-energy', title: 'Energia Limpa', sector: 'ENERGIA', basePrice: 240, volatility: 48, returnRate: 1.72, deltaSustainability: 14 },
   { id: 'agro-resilience', title: 'Agrofloresta Resiliente', sector: 'ALIMENTOS', basePrice: 150, volatility: 28, returnRate: 1.95, deltaSustainability: 18 },
   { id: 'early-warning', title: 'Sensores de Alerta', sector: 'DADOS', basePrice: 110, volatility: 20, returnRate: 2.1, deltaSustainability: 7 },
+  { id: 'climate-credit', title: 'Créditos de Carbono Comunitários', sector: 'CLIMA', basePrice: 195, volatility: 42, returnRate: 2.18, deltaSustainability: 22 },
+  { id: 'resilient-housing', title: 'Habitação Adaptada', sector: 'CIDADES', basePrice: 260, volatility: 55, returnRate: 1.88, deltaSustainability: 16 },
 ];
 
 const getMarketPrice = (offer: MarketOffer, round: number, index: number) =>

@@ -137,6 +137,25 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
   atmosphereMat.backFaceCulling = false;
   atmosphere.material = atmosphereMat;
 
+  // Holographic tactical layer: a subtle wireframe and latitude bands make the
+  // satellite globe read as an active command-room projection.
+  const holoSphere = MeshBuilder.CreateSphere("EarthHologramGrid", { diameter: 6.34, segments: 32 }, scene);
+  const holoMaterial = createColorMaterial("EarthHologramMaterial", scene, new Color3(0.08, 0.72, 1), 0.11);
+  holoMaterial.backFaceCulling = false;
+  holoMaterial.wireframe = true;
+  holoSphere.material = holoMaterial;
+  const holoLatitudeRings: Mesh[] = [];
+  [-0.92, -0.46, 0, 0.46, 0.92].forEach((y, index) => {
+    const radius = Math.sqrt(Math.max(0.08, 3.12 * 3.12 - (y * 3.12) * (y * 3.12)));
+    const band = MeshBuilder.CreateTorus(`EarthHoloLatitude_${index}`, { diameter: radius * 2, thickness: 0.012, tessellation: 80 }, scene);
+    band.parent = earth;
+    band.position.y = y * 3.12;
+    band.rotation.x = Math.PI / 2;
+    const bandMaterial = createColorMaterial(`EarthHoloLatitudeMaterial_${index}`, scene, new Color3(0.12, 0.8, 1), 0.14);
+    band.material = bandMaterial;
+    holoLatitudeRings.push(band);
+  });
+
   // Back orbital ring makes the Earth read as a tactical simulation without changing the planet texture.
   const ring = MeshBuilder.CreateTorus("OrbitRing", { diameter: 7.5, thickness: 0.018, tessellation: 96 }, scene);
   const ringMat = createColorMaterial("OrbitRingMaterial", scene, new Color3(0.08, 0.55, 1), 0.38);
@@ -200,9 +219,16 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     if (autoRotate) {
       earth.rotation.y += 0.0008;
       atmosphere.rotation.y += 0.001;
+      holoSphere.rotation.y -= 0.00045;
+      holoSphere.rotation.x = Math.sin(performance.now() / 4200) * 0.025;
       ring.rotation.z += 0.0007;
     }
     const t = performance.now() / 420;
+    const holoPulse = 1 + Math.sin(t * 0.7) * 0.018;
+    holoSphere.scaling.set(holoPulse, holoPulse, holoPulse);
+    holoLatitudeRings.forEach((band, index) => {
+      band.scaling.set(1 + Math.sin(t * 0.8 + index) * 0.012, 1 + Math.sin(t * 0.8 + index) * 0.012, 1 + Math.sin(t * 0.8 + index) * 0.012);
+    });
     impactRings.forEach((impactRing) => {
       const pulse = 1 + Math.sin(t + pulseIndex) * 0.12;
       impactRing.scaling.set(pulse, pulse, pulse);

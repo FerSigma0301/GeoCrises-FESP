@@ -9,3 +9,7 @@ The last-module preference is stored as `geocrisis:last-module` in localStorage.
 ## PDR gameplay improvements
 
 The decision cards now show rarity labels, hover lift, and compact impact comparison bars. The XP HUD now displays player level and distance to the next level. After an automated decision and meteorological event in the browser, the new Round Summary appeared with finance, population, sustainability, lives, and XP deltas; the event correctly showed -1 life and the chart updated from 1000 to 720 finance. The demo query was also corrected so only `demo=1` or `demo=true` triggers autoplay.
+
+## Campaign order, rewards, cards, and hologram
+
+The campaign now visibly begins with Seca Severa and Colapso Hídrico, followed by the agricultural crisis, flood, landslide, deforestation, wildfire, heatwave, sea-level, displacement, cyclone, volcano, earthquake, pollution, biodiversity, and pandemic. The Economy module visibly includes Seguro Paramétrico Climático, Licença de Dados Abertos, the All-in risk contract, and two new market offers. Cards show rarity badges and impact bars. The Earth scene now includes an animated wireframe hologram, latitude bands, atmosphere pulse, scan sweep, and a safe fallback overlay when WebGL is unavailable in the preview environment.

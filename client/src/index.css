@@ -183,6 +183,33 @@
     opacity: 0.35;
   }
 
+  @keyframes holoSweep {
+    0% { transform: translateY(-120%); opacity: 0; }
+    18% { opacity: 0.65; }
+    78% { opacity: 0.2; }
+    100% { transform: translateY(120%); opacity: 0; }
+  }
+
+  @keyframes holoBreathe {
+    0%, 100% { opacity: 0.22; }
+    50% { opacity: 0.48; }
+  }
+
+  .holo-sweep {
+    animation: holoSweep 4.8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+    background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.28), rgba(52, 211, 153, 0.12), transparent);
+    height: 35%;
+  }
+
+  .holo-breathe {
+    animation: holoBreathe 3.6s ease-in-out infinite;
+    box-shadow: inset 0 0 70px rgba(14, 165, 233, 0.12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .holo-sweep, .holo-breathe, .reward-float { animation: none; }
+  }
+
   /**
    * Custom container utility that centers content and adds responsive padding.
    *
