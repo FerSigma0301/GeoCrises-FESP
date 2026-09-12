@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { createGameScene, type CrisisImpact, type GameHandle } from "@/game/scene";
 import type { CrisisCard } from "@/game/types";
-import { Crosshair, MapPin } from "lucide-react";
+import { Activity, Crosshair, MapPin, Satellite } from "lucide-react";
 
 interface GlobeCanvasProps {
   activeCrisisId: string | null;
@@ -15,6 +15,8 @@ export default function GlobeCanvas({ activeCrisisId, activeCrisis, impacts, onS
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const startedRef = useRef(false);
   const handleRef = useRef<GameHandle | null>(null);
+  const activeImpact = impacts.find((impact) => impact.crisisId === activeCrisisId);
+  const impactIsPositive = activeImpact ? activeImpact.balance >= 0 : false;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,14 +56,15 @@ export default function GlobeCanvas({ activeCrisisId, activeCrisis, impacts, onS
   }, [impacts]);
 
   return (
-    <div className="relative w-full h-full min-h-[420px] bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border border-sky-900/40">
+    <div className="relative w-full h-full min-h-[420px] bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border border-sky-900/40 scanline">
       <canvas ref={canvasRef} className="w-full h-full block outline-none cursor-grab active:cursor-grabbing" />
-      <div className="absolute top-4 left-4 max-w-[48%] pointer-events-none bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-sky-500/30 text-[11px] text-sky-300 font-mono flex items-center gap-2 truncate">
+      <div className="absolute top-4 left-4 max-w-[52%] pointer-events-none bg-slate-950/80 backdrop-blur-md px-3 py-2 rounded-xl border border-sky-500/30 text-[10px] text-sky-300 font-mono flex items-center gap-2 truncate shadow-lg shadow-sky-950/30">
         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         <span className="truncate">TERRA REAL · BLUE MARBLE / NASA</span>
       </div>
-      <div className="absolute top-14 right-4 pointer-events-none bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-emerald-500/30 text-[11px] text-emerald-300 font-mono">
-        Verde = recuperação · Vermelho = risco agravado
+      <div className="absolute top-4 right-4 pointer-events-none rounded-xl border border-slate-700/70 bg-slate-950/75 px-3 py-2 text-[10px] font-mono text-slate-300 backdrop-blur-md">
+        <div className="flex items-center gap-1.5 text-cyan-300"><Satellite className="h-3 w-3" /> TELEMETRIA AO VIVO</div>
+        <div className="mt-1 flex items-center gap-2"><span className="text-emerald-300">● recuperação</span><span className="text-rose-300">● risco</span></div>
       </div>
       {activeCrisis && activeCrisisId === activeCrisis.id && (
         <div
@@ -87,6 +90,12 @@ export default function GlobeCanvas({ activeCrisisId, activeCrisis, impacts, onS
                   <span>LAT {activeCrisis.coordinates.lat.toFixed(2)}°</span>
                   <span>·</span>
                   <span>LNG {activeCrisis.coordinates.lng.toFixed(2)}°</span>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider">
+                  <Activity className="h-3 w-3 text-cyan-400" />
+                  <span className={activeImpact ? (impactIsPositive ? "text-emerald-300" : "text-rose-300") : "text-slate-500"}>
+                    {activeImpact ? `${activeImpact.label} · impacto ${Math.round(activeImpact.balance)}` : "Aguardando decisão estratégica"}
+                  </span>
                 </div>
               </div>
             </div>

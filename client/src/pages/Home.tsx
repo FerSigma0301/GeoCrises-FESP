@@ -14,7 +14,9 @@ import { Button } from '@/components/ui/button';
 import {
   AlertOctagon,
   BarChart2,
+  CheckCircle2,
   DollarSign,
+  Gauge,
   Heart,
   HelpCircle,
   Leaf,
@@ -175,18 +177,18 @@ export default function Home() {
   else if (totalScore >= 1000) finalRank = 'Gestor em Desenvolvimento 🥈';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid">
       {/* Top Tactical Status Bar (Recursos - PDR Item 7) */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-sky-900/60 px-4 py-2.5 shadow-xl">
+      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-sky-900/60 px-4 py-2.5 shadow-[0_10px_35px_rgba(2,6,23,0.55)]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           {/* Logo and Subtitle */}
           <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20 text-lg">
+            <span className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-cyan-400 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/25 text-lg ring-1 ring-white/15">
               🌍
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-extrabold tracking-tight text-white text-base">GeoCrisis</h1>
+                <h1 className="font-black tracking-tight text-white text-base">GeoCrisis</h1>
                 <Badge variant="outline" className="border-sky-500/40 text-sky-400 bg-sky-950/40 text-[10px] py-0">
                   Simulador de Decisões Reais
                 </Badge>
@@ -198,9 +200,9 @@ export default function Home() {
           </div>
 
           {/* Resources Dashboard (Item 7) */}
-          <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
             {/* Finance */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/80 border border-amber-500/30 text-amber-300">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-amber-500/30 text-amber-300 shadow-inner shadow-amber-500/5">
               <DollarSign className="w-4 h-4 text-amber-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">Finanças</span>
@@ -209,7 +211,7 @@ export default function Home() {
             </div>
 
             {/* Protected Population */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/80 border border-sky-500/30 text-sky-300">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-sky-500/30 text-sky-300 shadow-inner shadow-sky-500/5">
               <Users className="w-4 h-4 text-sky-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">População</span>
@@ -218,7 +220,7 @@ export default function Home() {
             </div>
 
             {/* Sustainability */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/80 border border-emerald-500/30 text-emerald-300">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-emerald-500/30 text-emerald-300 shadow-inner shadow-emerald-500/5">
               <Leaf className="w-4 h-4 text-emerald-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">Sustentabilidade</span>
@@ -227,7 +229,7 @@ export default function Home() {
             </div>
 
             {/* Lives / Response Capacity */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/80 border border-rose-500/30 text-rose-300">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-rose-500/30 text-rose-300 shadow-inner shadow-rose-500/5">
               <Heart className="w-4 h-4 text-rose-400 fill-rose-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">Capacidade</span>
@@ -236,7 +238,7 @@ export default function Home() {
             </div>
 
             {/* XP */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/80 border border-purple-500/30 text-purple-300">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-purple-500/30 text-purple-300 shadow-inner shadow-purple-500/5">
               <Zap className="w-4 h-4 text-purple-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">XP</span>
@@ -273,15 +275,32 @@ export default function Home() {
       </header>
 
       {/* Main Command Center Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Side: 3D Globe & Spatial Information */}
         <section className="lg:col-span-5 flex flex-col gap-4">
-          <div className="h-[380px] w-full">
+          <div className="h-[440px] w-full">
             <GlobeCanvas activeCrisisId={currentCrisis.id} activeCrisis={currentCrisis} impacts={impacts} />
           </div>
 
+          <div className="glass-panel rounded-2xl border border-cyan-900/60 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300"><Gauge className="h-3.5 w-3.5" /> Operação em curso</div>
+                <p className="mt-1 text-sm font-semibold text-white">Responda à crise com estratégia</p>
+              </div>
+              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-mono text-cyan-200">FASE {currentCrisisIdx + 1}/11</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 transition-all duration-700" style={{ width: `${((currentCrisisIdx + 1) / CRISES_DATA.length) * 100}%` }} />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+              <span>{decisionHistory.length} decisões registradas</span>
+              <span>{resources.lives > 0 ? 'Capacidade operacional estável' : 'Capacidade esgotada'}</span>
+            </div>
+          </div>
+
           {/* Crisis Pipeline & Map Legend */}
-          <div className="bg-slate-900/80 border border-sky-900/40 rounded-xl p-4 text-xs font-mono">
+          <div className="glass-panel border border-sky-900/40 rounded-2xl p-4 text-xs font-mono">
             <div className="flex items-center justify-between mb-3 text-slate-300">
               <span className="font-bold uppercase tracking-wider text-sky-400">
                 CRISES GLOBAIS CATALOGADAS ({currentCrisisIdx + 1}/{CRISES_DATA.length})
@@ -305,7 +324,7 @@ export default function Home() {
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-amber-400 animate-ping' : isPast ? 'bg-emerald-500' : 'bg-slate-600'}`} />
+                      {isPast ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-amber-400 animate-ping' : 'bg-slate-600'}`} />}
                       <span className="font-sans font-medium">{c.name}</span>
                     </div>
                     <span className="text-[10px] text-slate-400">{c.category.toUpperCase()}</span>
@@ -315,7 +334,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-emerald-900/40 rounded-xl p-4 text-xs">
+          <div className="glass-panel border border-emerald-900/40 rounded-2xl p-4 text-xs">
             <div className="flex items-center justify-between mb-3">
               <span className="font-bold uppercase tracking-wider text-emerald-300">IMPACTO DAS SUAS ESCOLHAS</span>
               <span className="text-slate-500 font-mono">{decisionHistory.length} decisões registradas</span>

@@ -34,7 +34,7 @@ export default function CrisisCardView({
   };
 
   return (
-    <div className="bg-slate-900/90 backdrop-blur-xl border border-sky-800/50 rounded-2xl p-6 shadow-2xl flex flex-col gap-5 text-slate-100">
+    <div className="glass-panel border border-sky-800/50 rounded-2xl p-5 lg:p-6 shadow-2xl flex flex-col gap-5 text-slate-100">
       {/* Header and Crisis Category Badge */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-900/60 pb-4">
         <div className="flex items-center gap-3">
@@ -43,16 +43,16 @@ export default function CrisisCardView({
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase font-mono tracking-widest text-rose-400 font-bold">CRISE GEOGRÁFICA ATIVA</span>
-              <Badge variant="outline" className="border-sky-500/40 text-sky-300 bg-sky-950/40">
+              <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-rose-400 font-bold">CRISE GEOGRÁFICA ATIVA</span>
+              <Badge variant="outline" className="border-sky-500/40 text-sky-300 bg-sky-950/40 text-[10px]">
                 {crisis.location}
               </Badge>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-white mt-0.5">{crisis.name}</h2>
+            <h2 className="text-2xl lg:text-[28px] font-black tracking-tight text-white mt-0.5">{crisis.name}</h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <Button
             size="sm"
             variant="outline"
@@ -137,13 +137,14 @@ export default function CrisisCardView({
 
       {/* Decision Options Cards (Carta de Decisão) */}
       <div className="mt-2">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 gap-3">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-sky-300 font-mono flex items-center gap-2">
             🧠 Cartas de Decisão — Escolha o Plano de Ação:
           </h3>
-          <span className="text-xs text-slate-400">
-            Seu Saldo: <strong className="text-emerald-400 font-mono">💰 {resources.finance} pts</strong>
-          </span>
+          <div className="shrink-0 text-right">
+            <span className="block text-[10px] uppercase tracking-wider text-slate-500 font-mono">Orçamento disponível</span>
+            <strong className="text-emerald-400 font-mono text-xs">💰 {resources.finance} pts</strong>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -160,17 +161,17 @@ export default function CrisisCardView({
                     setSelectedOption(opt);
                   }
                 }}
-                className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? 'border-sky-400 bg-sky-950/60 shadow-lg shadow-sky-500/10 ring-1 ring-sky-400'
+                    ? 'border-sky-400 bg-gradient-to-br from-sky-950/80 to-slate-950/80 shadow-lg shadow-sky-500/15 ring-1 ring-sky-400 -translate-y-0.5'
                     : isAffordable
-                    ? 'border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-900'
+                    ? 'border-slate-800 bg-slate-950/60 hover:border-cyan-700/70 hover:bg-slate-900 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-950/20'
                     : 'border-red-900/40 bg-red-950/10 opacity-60 cursor-not-allowed'
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h4 className="font-semibold text-white text-sm leading-snug">{opt.title}</h4>
+                    <h4 className="font-bold text-white text-sm leading-snug">{opt.title}</h4>
                     {isSelected && <CheckCircle className="w-4 h-4 text-sky-400 shrink-0" />}
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed mb-3">{opt.description}</p>
@@ -198,11 +199,12 @@ export default function CrisisCardView({
 
       {/* Confirmation Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-sky-900/40 mt-1">
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-400 min-w-0">
           {selectedOption ? (
-            <span className="text-sky-300">
-              Ação selecionada: <strong>{selectedOption.title}</strong>
-            </span>
+            <div className="flex items-start gap-2 text-sky-300">
+              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+              <span>Ação selecionada: <strong>{selectedOption.title}</strong></span>
+            </div>
           ) : (
             <span>Selecione uma carta de decisão acima para prosseguir.</span>
           )}
