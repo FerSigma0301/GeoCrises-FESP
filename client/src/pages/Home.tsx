@@ -396,6 +396,15 @@ export default function Home() {
             </div>
           </div>
 
+          <details open className="group rounded-2xl border border-amber-900/50 bg-slate-950/30 p-3 shadow-inner shadow-amber-950/10">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-1 py-1 marker:hidden">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300"><DollarSign className="h-3.5 w-3.5" /> Finanças & estratégia</div>
+                <p className="mt-1 text-xs text-slate-400">Receitas, contratos e investimentos da rodada</p>
+              </div>
+              <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[9px] font-mono text-amber-200 transition-transform group-open:rotate-180">⌄</span>
+            </summary>
+            <div className="mt-3 flex flex-col gap-3">
           <div className="glass-panel rounded-2xl border border-amber-900/60 p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
@@ -495,8 +504,18 @@ export default function Home() {
               })}
             </div>
           </div>
+            </div>
+          </details>
 
-          {/* Crisis Pipeline & Map Legend */}
+          <details open className="group rounded-2xl border border-sky-900/50 bg-slate-950/30 p-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-1 py-1 marker:hidden">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-sky-300"><Gauge className="h-3.5 w-3.5" /> Navegação da campanha</div>
+                <p className="mt-1 text-xs text-slate-400">Crises catalogadas e histórico de impactos</p>
+              </div>
+              <span className="rounded-full border border-sky-400/25 bg-sky-400/10 px-2 py-1 text-[9px] font-mono text-sky-200 transition-transform group-open:rotate-180">⌄</span>
+            </summary>
+            <div className="mt-3 flex flex-col gap-3">
           <div className="glass-panel border border-sky-900/40 rounded-2xl p-4 text-xs font-mono">
             <div className="flex items-center justify-between mb-3 text-slate-300">
               <span className="font-bold uppercase tracking-wider text-sky-400">
@@ -553,6 +572,8 @@ export default function Home() {
               </div>
             )}
           </div>
+            </div>
+          </details>
         </section>
 
         {/* Right Side: Active Crisis, Real Science Data, Decision Cards */}
