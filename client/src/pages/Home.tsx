@@ -127,10 +127,10 @@ export default function Home() {
   const [activeContract, setActiveContract] = useState<RiskContract | null>(null);
   const [resolvedContracts, setResolvedContracts] = useState<string[]>([]);
   const [marketPurchases, setMarketPurchases] = useState<string[]>([]);
-  const [activeModule, setActiveModule] = useState<'map' | 'economy' | 'decisions' | 'creators'>(() => {
+  const [activeModule, setActiveModule] = useState<'map' | 'economy' | 'decisions'>(() => {
     if (typeof window === 'undefined') return 'decisions';
     const stored = window.localStorage.getItem('geocrisis:last-module');
-    return stored === 'map' || stored === 'economy' || stored === 'decisions' || stored === 'creators' ? stored : 'decisions';
+    return stored === 'map' || stored === 'economy' || stored === 'decisions' ? stored : 'decisions';
   });
   const [moduleTransition, setModuleTransition] = useState(0);
   const [financeHistory, setFinanceHistory] = useState<Array<{ round: number; finance: number; delta: number; label: string }>>([
@@ -202,7 +202,7 @@ export default function Home() {
     setTutorialOpen(true);
   };
 
-  const switchModule = (module: 'map' | 'economy' | 'decisions' | 'creators') => {
+  const switchModule = (module: 'map' | 'economy' | 'decisions') => {
     if (module === activeModule) return;
     setModuleTransition((prev) => prev + 1);
     setActiveModule(module);
@@ -595,7 +595,6 @@ export default function Home() {
             { id: 'map' as const, label: 'Mapa', icon: MapIcon },
             { id: 'economy' as const, label: 'Economia', icon: Coins },
             { id: 'decisions' as const, label: 'Decisões', icon: Crosshair },
-            { id: 'creators' as const, label: 'Criadores', icon: Users },
           ].map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
@@ -612,7 +611,6 @@ export default function Home() {
             { id: 'map' as const, label: 'Mapa', icon: MapIcon, hint: 'Globo e crises' },
             { id: 'economy' as const, label: 'Economia', icon: Coins, hint: 'Recursos e mercado' },
             { id: 'decisions' as const, label: 'Decisões', icon: Crosshair, hint: 'Cartas e ciência' },
-            { id: 'creators' as const, label: 'Criadores', icon: Users, hint: 'Equipe do projeto' },
           ].map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
@@ -621,24 +619,11 @@ export default function Home() {
         </nav>
 
         <div className="col-span-full flex items-center justify-between rounded-xl border border-sky-900/40 bg-slate-950/40 px-3 py-2 text-[10px] font-mono text-slate-500">
-          <span className="uppercase tracking-[0.2em] text-sky-300">MÓDULO ATIVO · {activeModule === 'map' ? 'MAPA OPERACIONAL' : activeModule === 'economy' ? 'ECONOMIA DE RESILIÊNCIA' : activeModule === 'creators' ? 'CRIADORES DO PROJETO' : 'DECISÕES E CIÊNCIA'}</span>
+          <span className="uppercase tracking-[0.2em] text-sky-300">MÓDULO ATIVO · {activeModule === 'map' ? 'MAPA OPERACIONAL' : activeModule === 'economy' ? 'ECONOMIA DE RESILIÊNCIA' : 'DECISÕES E CIÊNCIA'}</span>
           <span>{gameMode === 'survival' ? `RODADA ${resources.round}` : `FASE ${currentCrisisIdx + 1}/${crisisDeck.length}`}</span>
         </div>
-        <section className={`${activeModule === 'creators' ? 'lg:col-span-12 animate-in fade-in slide-in-from-bottom-2 duration-500' : 'hidden'} overflow-hidden rounded-3xl border border-cyan-900/60 bg-slate-950/70 p-5 shadow-2xl shadow-cyan-950/20 sm:p-8`}>
-          <div className="relative">
-            <div className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-            <div className="relative flex flex-col justify-between gap-5 border-b border-sky-900/50 pb-6 sm:flex-row sm:items-end">
-              <div><div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.25em] text-cyan-300"><Users className="h-4 w-4" /> Equipe de desenvolvimento</div><h2 className="mt-2 text-3xl font-black tracking-tight text-white">As pessoas por trás do planeta</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">GeoCrisis nasceu da colaboração entre diferentes perspectivas. Conheça os criadores que transformaram pesquisa, estratégia e tecnologia em uma experiência de decisão.</p></div>
-              <div className="shrink-0 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-right"><span className="block text-2xl font-black text-emerald-300">05</span><span className="text-[9px] font-mono uppercase tracking-widest text-slate-500">criadores conectados</span></div>
-            </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {CREATORS.map((creator, index) => <article key={creator.name} className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/80 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-900"><div className="absolute right-3 top-3 text-[9px] font-mono text-slate-700">0{index + 1}</div><div className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-lg font-black shadow-lg ${creator.tone}`}>{creator.initials}</div><h3 className="mt-5 font-bold text-white">{creator.name}</h3><p className="mt-1 text-[10px] font-mono uppercase leading-relaxed tracking-wider text-cyan-300/80">{creator.role}</p><div className="mt-5 h-px bg-gradient-to-r from-cyan-400/40 to-transparent" /><p className="mt-3 text-[10px] leading-relaxed text-slate-500">Contribuição essencial para a missão GeoCrisis.</p></article>)}
-            </div>
-            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-sky-900/50 bg-sky-950/15 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300"><Sparkles className="h-4 w-4" /></span><div><p className="text-xs font-bold text-white">Uma missão construída em equipe</p><p className="text-[10px] text-slate-500">Ciência, criatividade e decisões para um futuro mais resiliente.</p></div></div><span className="text-[10px] font-mono uppercase tracking-widest text-slate-600">GEOCRISIS / CREDITS</span></div>
-          </div>
-        </section>
         {/* Left Side: 3D Globe & Spatial Information */}
-        <section key={`module-left-${moduleTransition}`} className={`${activeModule === 'decisions' || activeModule === 'creators' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
+        <section key={`module-left-${moduleTransition}`} className={`${activeModule === 'decisions' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
           <div className={`${activeModule !== 'map' ? 'hidden' : ''} h-[440px] w-full`}>
             <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
           </div>
