@@ -785,7 +785,370 @@ export const CRISES_DATA: CrisisCard[] = [
       condition: 'high_rain', impact: { population: -50, finance: -60, lives: -1 }
     }
   }
-
+,
+  {
+    "id": "crisis-earthquake-1",
+    "name": "Terremoto e Colapso de Infraestrutura",
+    "category": "earthquake",
+    "location": "Cordilheira dos Andes / Santiago - Chile",
+    "coordinates": {
+      "lat": -33.45,
+      "lng": -70.67
+    },
+    "image": "/manus-storage/crisis_flood_78fe1959.png",
+    "geographicConcepts": [
+      "Tectônica de placas",
+      "Risco sísmico",
+      "Resiliência urbana",
+      "Infraestrutura crítica"
+    ],
+    "scientificDescription": "Um terremoto de alta magnitude atingiu uma área metropolitana densamente povoada. A intensidade do tremor e a interrupção de energia e água transformaram um evento natural em uma crise territorial complexa.",
+    "realWorldSource": {
+      "institution": "Centro Sismológico Nacional & USGS",
+      "dataset": "ShakeMap e Inventário de Risco Sísmico Urbano",
+      "year": "2024",
+      "urlDescription": "Mapas de intensidade, falhas geológicas ativas e estimativas de exposição da população."
+    },
+    "options": [
+      {
+        "id": "opt-quake-retrofit",
+        "title": "Reforço Estrutural de Escolas e Hospitais",
+        "description": "Priorizar prédios essenciais com reforço de pilares e rotas de evacuação.",
+        "category": "infra",
+        "costFinance": 420,
+        "deltaPopulation": 360,
+        "deltaSustainability": 8,
+        "deltaXP": 150,
+        "scientificFeedback": "Infraestrutura crítica resiliente reduz mortes secundárias e acelera a recuperação."
+      },
+      {
+        "id": "opt-quake-drills",
+        "title": "Rede Comunitária de Treinamento e Alerta",
+        "description": "Criar brigadas locais, simulados recorrentes e alertas multicanal.",
+        "category": "prevention",
+        "costFinance": 180,
+        "deltaPopulation": 240,
+        "deltaSustainability": 18,
+        "deltaXP": 110,
+        "scientificFeedback": "Preparação comunitária reduz pânico e aumenta a velocidade de resposta."
+      },
+      {
+        "id": "opt-quake-shelter",
+        "title": "Abrigos Temporários e Logística Humanitária",
+        "description": "Montar centros de abrigo e corredores de suprimentos descentralizados.",
+        "category": "social",
+        "costFinance": 300,
+        "deltaPopulation": 390,
+        "deltaSustainability": 2,
+        "deltaXP": 130,
+        "scientificFeedback": "Abrigos bem distribuídos protegem a população deslocada."
+      },
+      {
+        "id": "opt-quake-open-space",
+        "title": "Parques de Segurança e Rotas de Evacuação",
+        "description": "Converter áreas livres em pontos seguros conectados por rotas sinalizadas.",
+        "category": "nature",
+        "costFinance": 260,
+        "deltaPopulation": 270,
+        "deltaSustainability": 35,
+        "deltaXP": 140,
+        "scientificFeedback": "Espaços abertos funcionam como infraestrutura verde e zona de segurança."
+      }
+    ],
+    "knowledgeQuestion": {
+      "question": "Por que prédios e hospitais devem ser priorizados na preparação sísmica?",
+      "options": [
+        "Porque concentram serviços vitais e precisam permanecer operacionais após o tremor.",
+        "Porque são sempre os prédios mais antigos.",
+        "Porque eliminam o risco de terremotos.",
+        "Porque impedem o movimento das placas."
+      ],
+      "correctIndex": 0,
+      "explanation": "Hospitais, escolas e redes de emergência sustentam a resposta e sua continuidade salva vidas."
+    },
+    "unexpectedEvent": {
+      "title": "Réplica de Alta Intensidade!",
+      "description": "Uma réplica bloqueou duas rotas de acesso aos abrigos.",
+      "condition": "random",
+      "impact": {
+        "finance": -70,
+        "population": -45,
+        "lives": -1
+      }
+    }
+  },
+  {
+    "id": "crisis-pollution-1",
+    "name": "Nuvem Tóxica e Crise da Qualidade do Ar",
+    "category": "pollution",
+    "location": "Corredor Industrial do Rio Paraopeba - Brasil",
+    "coordinates": {
+      "lat": -19.97,
+      "lng": -44.2
+    },
+    "image": "/manus-storage/crisis_heatwave_025c598f.png",
+    "geographicConcepts": [
+      "Poluição atmosférica",
+      "Saúde ambiental",
+      "Justiça territorial",
+      "Indústria"
+    ],
+    "scientificDescription": "Uma inversão térmica reteve poluentes sobre uma área industrial e bairros periféricos. A exposição agravou doenças respiratórias e revelou a desigual distribuição dos riscos ambientais.",
+    "realWorldSource": {
+      "institution": "CETESB & Organização Mundial da Saúde",
+      "dataset": "Diretrizes de Qualidade do Ar e Inventário de Emissões",
+      "year": "2024",
+      "urlDescription": "Medições de material particulado, ozônio e fontes emissoras em áreas urbanas."
+    },
+    "options": [
+      {
+        "id": "opt-pollution-sensors",
+        "title": "Sensores Abertos de Qualidade do Ar",
+        "description": "Instalar estações e publicar mapas horários de poluentes por bairro.",
+        "category": "prevention",
+        "costFinance": 190,
+        "deltaPopulation": 210,
+        "deltaSustainability": 22,
+        "deltaXP": 115,
+        "scientificFeedback": "Monitoramento transparente orienta proteção e responsabilização ambiental."
+      },
+      {
+        "id": "opt-pollution-health",
+        "title": "Protocolo de Saúde e Proteção Respiratória",
+        "description": "Distribuir máscaras adequadas e abrir centros de atendimento.",
+        "category": "social",
+        "costFinance": 280,
+        "deltaPopulation": 330,
+        "deltaSustainability": 5,
+        "deltaXP": 125,
+        "scientificFeedback": "Resposta sanitária imediata reduz internações enquanto a fonte é controlada."
+      },
+      {
+        "id": "opt-pollution-transition",
+        "title": "Transição Industrial para Emissão Zero",
+        "description": "Financiar filtros, eletrificação de processos e metas públicas.",
+        "category": "infra",
+        "costFinance": 520,
+        "deltaPopulation": 390,
+        "deltaSustainability": 65,
+        "deltaXP": 190,
+        "scientificFeedback": "A transição tecnológica ataca a causa estrutural com governança de longo prazo."
+      },
+      {
+        "id": "opt-pollution-greenbelt",
+        "title": "Cinturão Verde e Corredores de Ventilação",
+        "description": "Criar parques lineares e preservar áreas de circulação do vento.",
+        "category": "nature",
+        "costFinance": 340,
+        "deltaPopulation": 250,
+        "deltaSustainability": 55,
+        "deltaXP": 150,
+        "scientificFeedback": "Infraestrutura verde reduz calor e exposição, sem substituir o controle da fonte."
+      }
+    ],
+    "knowledgeQuestion": {
+      "question": "O que torna uma inversão térmica perigosa?",
+      "options": [
+        "Ela impede a dispersão vertical dos poluentes e concentra a exposição perto do solo.",
+        "Ela elimina todo o oxigênio.",
+        "Ela transforma poluentes em água potável.",
+        "Ela ocorre apenas em áreas rurais."
+      ],
+      "correctIndex": 0,
+      "explanation": "A camada de ar quente sobre o ar frio funciona como uma tampa e mantém contaminantes próximos à população."
+    },
+    "unexpectedEvent": {
+      "title": "Pico de Material Particulado!",
+      "description": "Uma falha em um filtro industrial elevou a concentração durante o horário de pico.",
+      "condition": "random",
+      "impact": {
+        "finance": -90,
+        "population": -60
+      }
+    }
+  },
+  {
+    "id": "crisis-pandemic-1",
+    "name": "Surto Epidemiológico e Pressão Hospitalar",
+    "category": "pandemic",
+    "location": "Região Metropolitana de Manaus - Brasil",
+    "coordinates": {
+      "lat": -3.12,
+      "lng": -60.02
+    },
+    "image": "/manus-storage/crisis_drought_cca1c7d6.png",
+    "geographicConcepts": [
+      "Saúde pública",
+      "Mobilidade",
+      "Vigilância epidemiológica",
+      "Desigualdade"
+    ],
+    "scientificDescription": "Um surto de transmissão rápida pressiona unidades de saúde e interrompe atividades econômicas. A distância entre comunidades e o acesso desigual exigem coordenação territorial.",
+    "realWorldSource": {
+      "institution": "Fiocruz & Ministério da Saúde",
+      "dataset": "Sistemas de Vigilância Epidemiológica e Leitos SUS",
+      "year": "2024",
+      "urlDescription": "Indicadores de transmissão, capacidade hospitalar e distribuição espacial de serviços."
+    },
+    "options": [
+      {
+        "id": "opt-pandemic-surveillance",
+        "title": "Vigilância de Dados e Testagem Rápida",
+        "description": "Criar laboratórios móveis, rastreamento ético e boletins transparentes.",
+        "category": "prevention",
+        "costFinance": 260,
+        "deltaPopulation": 340,
+        "deltaSustainability": 12,
+        "deltaXP": 145,
+        "scientificFeedback": "Dados rápidos permitem direcionar recursos antes do colapso hospitalar."
+      },
+      {
+        "id": "opt-pandemic-hospitals",
+        "title": "Expandir Leitos e Proteger Profissionais",
+        "description": "Reforçar hospitais regionais, estoques estratégicos e equipes.",
+        "category": "infra",
+        "costFinance": 430,
+        "deltaPopulation": 410,
+        "deltaSustainability": 4,
+        "deltaXP": 160,
+        "scientificFeedback": "Capacidade hospitalar salva vidas, mas precisa de prevenção."
+      },
+      {
+        "id": "opt-pandemic-community",
+        "title": "Comunicação Comunitária e Proteção Social",
+        "description": "Apoiar agentes locais, renda emergencial e comunicação acessível.",
+        "category": "social",
+        "costFinance": 240,
+        "deltaPopulation": 300,
+        "deltaSustainability": 18,
+        "deltaXP": 130,
+        "scientificFeedback": "Confiança pública aumenta adesão e reduz impactos desiguais."
+      },
+      {
+        "id": "opt-pandemic-prevention",
+        "title": "Prevenção Integrada e Saúde Ambiental",
+        "description": "Investir em saneamento, ventilação, vacinação e redução de riscos.",
+        "category": "nature",
+        "costFinance": 360,
+        "deltaPopulation": 280,
+        "deltaSustainability": 48,
+        "deltaXP": 175,
+        "scientificFeedback": "Prevenção estrutural reduz a recorrência de surtos."
+      }
+    ],
+    "knowledgeQuestion": {
+      "question": "Por que a vigilância territorial é importante durante um surto?",
+      "options": [
+        "Porque mostra onde transmissão e pressão hospitalar estão crescendo.",
+        "Porque substitui hospitais.",
+        "Porque garante que nenhuma doença será transmitida.",
+        "Porque registra apenas o clima."
+      ],
+      "correctIndex": 0,
+      "explanation": "A vigilância combina tempo e espaço para identificar focos e priorizar recursos."
+    },
+    "unexpectedEvent": {
+      "title": "Nova Cadeia de Transmissão!",
+      "description": "Uma rota regional conectou comunidades sem acesso a testagem.",
+      "condition": "random",
+      "impact": {
+        "finance": -65,
+        "population": -55,
+        "lives": -1
+      }
+    }
+  },
+  {
+    "id": "crisis-biodiversity-1",
+    "name": "Colapso de Biodiversidade e Serviços Ecossistêmicos",
+    "category": "biodiversity",
+    "location": "Mata Atlântica e Serra do Mar - Brasil",
+    "coordinates": {
+      "lat": -23.35,
+      "lng": -44.82
+    },
+    "image": "/manus-storage/crisis_deforest_cd8ad5b2.png",
+    "geographicConcepts": [
+      "Biodiversidade",
+      "Fragmentação",
+      "Polinização",
+      "Conectividade ecológica"
+    ],
+    "scientificDescription": "A fragmentação de habitats e a perda de espécies-chave ameaçam água, polinização e estabilidade de encostas. O impacto aparece lentamente, mas compromete serviços essenciais.",
+    "realWorldSource": {
+      "institution": "ICMBio & IPBES",
+      "dataset": "Avaliação Nacional de Biodiversidade e Áreas Prioritárias",
+      "year": "2024",
+      "urlDescription": "Indicadores de perda de habitat, conectividade e risco para espécies ameaçadas."
+    },
+    "options": [
+      {
+        "id": "opt-bio-corridors",
+        "title": "Corredores Ecológicos Conectados",
+        "description": "Restaurar faixas entre fragmentos e integrar unidades de conservação.",
+        "category": "nature",
+        "costFinance": 300,
+        "deltaPopulation": 230,
+        "deltaSustainability": 75,
+        "deltaXP": 180,
+        "scientificFeedback": "Conectividade permite fluxo gênico e deslocamento diante das mudanças climáticas."
+      },
+      {
+        "id": "opt-bio-communities",
+        "title": "Economia da Floresta com Comunidades",
+        "description": "Financiar cadeias de produtos nativos e monitoramento comunitário.",
+        "category": "social",
+        "costFinance": 250,
+        "deltaPopulation": 290,
+        "deltaSustainability": 52,
+        "deltaXP": 150,
+        "scientificFeedback": "Renda alinhada à conservação transforma comunidades em guardiãs."
+      },
+      {
+        "id": "opt-bio-restoration",
+        "title": "Restauração de Nascentes e Encostas",
+        "description": "Recuperar áreas críticas para água, solo e refúgio de espécies.",
+        "category": "infra",
+        "costFinance": 380,
+        "deltaPopulation": 310,
+        "deltaSustainability": 68,
+        "deltaXP": 165,
+        "scientificFeedback": "Restauração multifuncional recupera serviços e reduz riscos."
+      },
+      {
+        "id": "opt-bio-monitoring",
+        "title": "Observatório de Espécies Sentinelas",
+        "description": "Usar sensores, ciência cidadã e eDNA para detectar perdas.",
+        "category": "prevention",
+        "costFinance": 210,
+        "deltaPopulation": 180,
+        "deltaSustainability": 45,
+        "deltaXP": 155,
+        "scientificFeedback": "Indicadores precoces permitem agir antes de danos irreversíveis."
+      }
+    ],
+    "knowledgeQuestion": {
+      "question": "Por que corredores ecológicos são importantes?",
+      "options": [
+        "Porque conectam habitats e permitem deslocamento e troca genética.",
+        "Porque substituem todas as áreas protegidas.",
+        "Porque impedem qualquer incêndio.",
+        "Porque servem apenas como estradas."
+      ],
+      "correctIndex": 0,
+      "explanation": "A conectividade reduz o isolamento das populações e melhora a adaptação dos ecossistemas."
+    },
+    "unexpectedEvent": {
+      "title": "Mortalidade de Polinizadores!",
+      "description": "Uma onda de calor e defensivos reduziram a atividade de polinizadores.",
+      "condition": "random",
+      "impact": {
+        "finance": -75,
+        "population": -35,
+        "sustainability": -15
+      }
+    }
+  }
 ];
 
 export const SURVEY_QUESTIONS = [
@@ -821,5 +1184,6 @@ export const SURVEY_QUESTIONS = [
       'Significa priorizar apenas o lucro imediato das empresas de construção pesada.'
     ],
     correctIndex: 0
-  }
+  },
+
 ];

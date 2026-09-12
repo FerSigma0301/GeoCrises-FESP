@@ -23,7 +23,7 @@ export interface DecisionOption {
 export interface CrisisCard {
   id: string;
   name: string;
-  category: 'flood' | 'drought' | 'wildfire' | 'heatwave' | 'deforestation' | 'sealevel';
+  category: 'flood' | 'drought' | 'wildfire' | 'heatwave' | 'deforestation' | 'sealevel' | 'earthquake' | 'pollution' | 'pandemic' | 'biodiversity';
   location: string;
   coordinates: { lat: number; lng: number };
   image: string;

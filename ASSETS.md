@@ -13,6 +13,11 @@
 | `crisis_deforest` | Desmatamento e avanço da fronteira agrícola | 1920x1080 | `/manus-storage/crisis_deforest_cd8ad5b2.png` |
 | `crisis_sealevel` | Ressaca e elevação do nível do mar em orla | 1920x1080 | `/manus-storage/crisis_sealevel_8f0012fc.png` |
 | `earth_blue_marble_nasa` | Blue Marble: Next Generation, textura equiretangular realista da superfície terrestre | 5400x2700 | `/manus-storage/earth_blue_marble_nasa_3368a8fe.jpg` |
+| `geocrisis_ambient_theme` | Trilha instrumental tática para a sala de comando, com pulsos de telemetria e tensão ambiental | 90s | `/manus-storage/geocrisis_ambient_theme_adade28b.mp3` |
+
+## Crisis Expansion
+
+The catalog now includes **15 playable crises** across flood, drought, wildfire, heatwave, deforestation, sea-level rise, earthquake, pollution, pandemic, and biodiversity-collapse scenarios.
 
 ## Attribution
 

@@ -1,7 +1,25 @@
 // Sound effects using Web Audio API (zero external assets, 100% reliable)
 class SoundManager {
   private ctx: AudioContext | null = null;
+  private music: HTMLAudioElement | null = null;
   public enabled: boolean = true;
+
+  private startMusic() {
+    if (!this.enabled || typeof window === 'undefined') return;
+    if (!this.music) {
+      this.music = new Audio('/manus-storage/geocrisis_ambient_theme_adade28b.mp3');
+      this.music.loop = true;
+      this.music.volume = 0.18;
+      this.music.preload = 'auto';
+    }
+    if (this.music.paused) void this.music.play().catch(() => undefined);
+  }
+
+  stopMusic() {
+    if (!this.music) return;
+    this.music.pause();
+    this.music.currentTime = 0;
+  }
 
   private init() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -15,6 +33,7 @@ class SoundManager {
 
   playClick() {
     if (!this.enabled) return;
+    this.startMusic();
     this.init();
     if (!this.ctx) return;
 
@@ -35,6 +54,7 @@ class SoundManager {
 
   playAlarm() {
     if (!this.enabled) return;
+    this.startMusic();
     this.init();
     if (!this.ctx) return;
 
@@ -56,6 +76,7 @@ class SoundManager {
 
   playSuccess() {
     if (!this.enabled) return;
+    this.startMusic();
     this.init();
     if (!this.ctx) return;
 
@@ -79,6 +100,7 @@ class SoundManager {
 
   playWarning() {
     if (!this.enabled) return;
+    this.startMusic();
     this.init();
     if (!this.ctx) return;
 

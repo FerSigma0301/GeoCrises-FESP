@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CrisisCard, DecisionOption, PlayerResources } from '@/game/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,17 @@ export default function CrisisCardView({
 }: CrisisCardViewProps) {
   const [showSource, setShowSource] = useState(false);
   const [selectedOption, setSelectedOption] = useState<DecisionOption | null>(null);
+  useEffect(() => {
+    setShowSource(false);
+    setSelectedOption(null);
+  }, [crisis.id]);
+  const categoryMeta: Record<DecisionOption['category'], { label: string; color: string }> = {
+    infra: { label: 'INFRAESTRUTURA', color: 'text-orange-300 border-orange-400/30 bg-orange-400/10' },
+    prevention: { label: 'PREVENÇÃO', color: 'text-cyan-300 border-cyan-400/30 bg-cyan-400/10' },
+    social: { label: 'PROTEÇÃO SOCIAL', color: 'text-violet-300 border-violet-400/30 bg-violet-400/10' },
+    nature: { label: 'NATUREZA', color: 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10' },
+    emergency: { label: 'EMERGÊNCIA', color: 'text-rose-300 border-rose-400/30 bg-rose-400/10' },
+  };
 
   const handleConfirmDecision = () => {
     if (!selectedOption) return;
@@ -161,6 +172,15 @@ export default function CrisisCardView({
                     setSelectedOption(opt);
                   }
                 }}
+                onKeyDown={(event) => {
+                  if ((event.key === 'Enter' || event.key === ' ') && isAffordable) {
+                    event.preventDefault();
+                    sounds.playClick();
+                    setSelectedOption(opt);
+                  }
+                }}
+                role="button"
+                tabIndex={isAffordable ? 0 : -1}
                 className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                   isSelected
                     ? 'border-sky-400 bg-gradient-to-br from-sky-950/80 to-slate-950/80 shadow-lg shadow-sky-500/15 ring-1 ring-sky-400 -translate-y-0.5'
@@ -171,7 +191,12 @@ export default function CrisisCardView({
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h4 className="font-bold text-white text-sm leading-snug">{opt.title}</h4>
+                    <div>
+                      <span className={`mb-2 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-wider ${categoryMeta[opt.category].color}`}>
+                        {categoryMeta[opt.category].label}
+                      </span>
+                      <h4 className="font-bold text-white text-sm leading-snug">{opt.title}</h4>
+                    </div>
                     {isSelected && <CheckCircle className="w-4 h-4 text-sky-400 shrink-0" />}
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed mb-3">{opt.description}</p>
@@ -201,10 +226,13 @@ export default function CrisisCardView({
       <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-sky-900/40 mt-1">
         <div className="text-xs text-slate-400 min-w-0">
           {selectedOption ? (
-            <div className="flex items-start gap-2 text-sky-300">
-              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-              <span>Ação selecionada: <strong>{selectedOption.title}</strong></span>
-            </div>
+            <>
+              <div className="flex items-start gap-2 text-sky-300">
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Ação selecionada: <strong>{selectedOption.title}</strong></span>
+              </div>
+              <p className="ml-6 mt-1 max-w-xl text-[11px] leading-relaxed text-slate-400">{selectedOption.scientificFeedback}</p>
+            </>
           ) : (
             <span>Selecione uma carta de decisão acima para prosseguir.</span>
           )}

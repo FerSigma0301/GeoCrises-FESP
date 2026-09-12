@@ -73,6 +73,7 @@ export default function Home() {
 
   const handleToggleSound = () => {
     sounds.enabled = !soundEnabled;
+    if (soundEnabled) sounds.stopMusic();
     setSoundEnabled(!soundEnabled);
   };
 
@@ -279,7 +280,7 @@ export default function Home() {
         {/* Left Side: 3D Globe & Spatial Information */}
         <section className="lg:col-span-5 flex flex-col gap-4">
           <div className="h-[440px] w-full">
-            <GlobeCanvas activeCrisisId={currentCrisis.id} activeCrisis={currentCrisis} impacts={impacts} />
+            <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
           </div>
 
           <div className="glass-panel rounded-2xl border border-cyan-900/60 p-4">
@@ -288,7 +289,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300"><Gauge className="h-3.5 w-3.5" /> Operação em curso</div>
                 <p className="mt-1 text-sm font-semibold text-white">Responda à crise com estratégia</p>
               </div>
-              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-mono text-cyan-200">FASE {currentCrisisIdx + 1}/11</span>
+              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-mono text-cyan-200">FASE {currentCrisisIdx + 1}/{CRISES_DATA.length}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
               <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 transition-all duration-700" style={{ width: `${((currentCrisisIdx + 1) / CRISES_DATA.length) * 100}%` }} />
