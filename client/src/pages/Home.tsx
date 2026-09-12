@@ -79,7 +79,15 @@ export default function Home() {
   const [activeContract, setActiveContract] = useState<RiskContract | null>(null);
   const [resolvedContracts, setResolvedContracts] = useState<string[]>([]);
   const [marketPurchases, setMarketPurchases] = useState<string[]>([]);
-  const [activeModule, setActiveModule] = useState<'map' | 'economy' | 'decisions'>('decisions');
+  const [activeModule, setActiveModule] = useState<'map' | 'economy' | 'decisions'>(() => {
+    if (typeof window === 'undefined') return 'decisions';
+    const stored = window.localStorage.getItem('geocrisis:last-module');
+    return stored === 'map' || stored === 'economy' || stored === 'decisions' ? stored : 'decisions';
+  });
+  const [moduleTransition, setModuleTransition] = useState(0);
+  const [financeHistory, setFinanceHistory] = useState<Array<{ round: number; finance: number; delta: number; label: string }>>([
+    { round: 1, finance: 1000, delta: 0, label: 'Base' },
+  ]);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Modals state
@@ -103,6 +111,23 @@ export default function Home() {
 
   const currentCrisis = CRISES_DATA[currentCrisisIdx];
 
+  const switchModule = (module: 'map' | 'economy' | 'decisions') => {
+    if (module === activeModule) return;
+    setModuleTransition((prev) => prev + 1);
+    setActiveModule(module);
+  };
+
+  useEffect(() => {
+    window.localStorage.setItem('geocrisis:last-module', activeModule);
+  }, [activeModule]);
+
+  const recordFinance = (nextFinance: number, label: string) => {
+    setFinanceHistory((prev) => {
+      const last = prev[prev.length - 1];
+      return [...prev, { round: resources.round, finance: nextFinance, delta: nextFinance - last.finance, label }].slice(-12);
+    });
+  };
+
   const handleToggleSound = () => {
     sounds.enabled = !soundEnabled;
     if (soundEnabled) sounds.stopMusic();
@@ -117,6 +142,7 @@ export default function Home() {
     }
     sounds.playSuccess();
     setClaimedOpportunities((prev) => [...prev, opportunity.id]);
+    recordFinance(resources.finance + opportunity.rewardFinance, opportunity.title);
     setResources((prev) => ({
       ...prev,
       finance: prev.finance + opportunity.rewardFinance,
@@ -133,6 +159,7 @@ export default function Home() {
     }
     sounds.playAlarm();
     setActiveContract(contract);
+    recordFinance(resources.finance - contract.stake, `Entrada · ${contract.title}`);
     setResources((prev) => ({ ...prev, finance: prev.finance - contract.stake }));
   };
 
@@ -145,6 +172,7 @@ export default function Home() {
     const payout = Math.round(price * offer.returnRate);
     sounds.playSuccess();
     setMarketPurchases((prev) => [...prev, purchaseKey]);
+    recordFinance(resources.finance - price + payout, offer.title);
     setResources((prev) => ({
       ...prev,
       finance: prev.finance - price + payout,
@@ -156,6 +184,8 @@ export default function Home() {
     if (!activeContract) return;
     const contract = activeContract;
     const success = balance >= contract.threshold;
+    const nextFinance = success ? resources.finance + contract.reward : Math.max(0, resources.finance - contract.penaltyFinance);
+    recordFinance(nextFinance, success ? `Sucesso · ${contract.title}` : `Falha · ${contract.title}`);
     setResources((prev) => ({
       ...prev,
       finance: success ? prev.finance + contract.reward : Math.max(0, prev.finance - contract.penaltyFinance),
@@ -182,6 +212,7 @@ export default function Home() {
 
     const balance = option.deltaPopulation + option.deltaSustainability * 2 + option.deltaXP / 2 - option.costFinance / 3;
     const result = balance >= 180 ? 'Recuperação forte' : balance >= 90 ? 'Equilíbrio positivo' : 'Resposta de alto custo';
+    recordFinance(newFinance, currentCrisis.name);
     resolveRiskContract(balance);
     setImpacts((prev) => [
       ...prev.filter((impact) => impact.crisisId !== currentCrisis.id),
@@ -242,6 +273,7 @@ export default function Home() {
     setKnowledgeCompletedForCurrent(false);
     setImpacts([]);
     setDecisionHistory([]);
+    setFinanceHistory([{ round: 1, finance: initialResources.finance, delta: 0, label: 'Base' }]);
     setClaimedOpportunities([]);
     setActiveContract(null);
     setResolvedContracts([]);
@@ -257,6 +289,15 @@ export default function Home() {
   if (totalScore >= 2000) finalRank = 'Líder Global 🌎';
   else if (totalScore >= 1500) finalRank = 'Gestor Expert 🥇';
   else if (totalScore >= 1000) finalRank = 'Gestor em Desenvolvimento 🥈';
+
+  const chartMin = Math.min(...financeHistory.map((point) => point.finance), 0);
+  const chartMax = Math.max(...financeHistory.map((point) => point.finance), 1000);
+  const chartRange = Math.max(1, chartMax - chartMin);
+  const chartPoints = financeHistory.map((point, index) => {
+    const x = financeHistory.length === 1 ? 20 : 20 + (index / (financeHistory.length - 1)) * 340;
+    const y = 112 - ((point.finance - chartMin) / chartRange) * 92;
+    return `${x},${y}`;
+  }).join(' ');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid">
@@ -353,7 +394,7 @@ export default function Home() {
           ].map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
-            return <button key={item.id} type="button" onClick={() => setActiveModule(item.id)} title={item.label} className={`group flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 ${active ? 'border-cyan-400/60 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-500 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-200'}`}><Icon className="h-4 w-4 transition-transform group-hover:scale-110" /></button>;
+            return <button key={item.id} type="button" onClick={() => switchModule(item.id)} title={item.label} className={`group flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 ${active ? 'border-cyan-400/60 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-500 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-200'}`}><Icon className="h-4 w-4 transition-transform group-hover:scale-110" /></button>;
           })}
         </div>
         <span className="text-[9px] font-mono text-slate-600 [writing-mode:vertical-rl]">GEOCRISIS</span>
@@ -369,7 +410,7 @@ export default function Home() {
           ].map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
-            return <button key={item.id} type="button" onClick={() => setActiveModule(item.id)} className={`flex min-w-[125px] flex-1 items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${active ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-100' : 'border-transparent text-slate-500 hover:bg-slate-900'}`}><Icon className="h-4 w-4" /><span><strong className="block text-xs">{item.label}</strong><small className="block text-[9px] text-slate-500">{item.hint}</small></span></button>;
+            return <button key={item.id} type="button" onClick={() => switchModule(item.id)} className={`flex min-w-[125px] flex-1 items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${active ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-100' : 'border-transparent text-slate-500 hover:bg-slate-900'}`}><Icon className="h-4 w-4" /><span><strong className="block text-xs">{item.label}</strong><small className="block text-[9px] text-slate-500">{item.hint}</small></span></button>;
           })}
         </nav>
 
@@ -378,7 +419,7 @@ export default function Home() {
           <span>FASE {currentCrisisIdx + 1}/{CRISES_DATA.length}</span>
         </div>
         {/* Left Side: 3D Globe & Spatial Information */}
-        <section className={`${activeModule === 'decisions' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4`}>
+        <section key={`module-left-${moduleTransition}`} className={`${activeModule === 'decisions' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
           <div className={`${activeModule !== 'map' ? 'hidden' : ''} h-[440px] w-full`}>
             <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
           </div>
@@ -409,6 +450,33 @@ export default function Home() {
               <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[9px] font-mono text-amber-200 transition-transform group-open:rotate-180">⌄</span>
             </summary>
             <div className="mt-3 flex flex-col gap-3">
+              <div className="rounded-2xl border border-amber-500/20 bg-slate-950/65 p-3 animate-in fade-in zoom-in-95 duration-500">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-amber-300">Fluxo financeiro</p>
+                    <p className="mt-1 text-xs text-slate-400">Histórico de ganhos e perdas da operação</p>
+                  </div>
+                  <span className="text-right font-mono text-[10px] text-amber-200">Atual<br /><strong className="text-sm">{resources.finance}</strong></span>
+                </div>
+                <svg viewBox="0 0 380 132" className="h-32 w-full overflow-visible" role="img" aria-label="Gráfico histórico de finanças">
+                  <defs>
+                    <linearGradient id="finance-fill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <line x1="20" x2="360" y1="112" y2="112" stroke="#334155" strokeWidth="1" />
+                  <line x1="20" x2="360" y1="66" y2="66" stroke="#1e293b" strokeWidth="1" strokeDasharray="3 5" />
+                  <polyline points={`${chartPoints} 360,112 20,112`} fill="url(#finance-fill)" stroke="none" />
+                  <polyline points={chartPoints} fill="none" stroke="#fbbf24" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-700" />
+                  {financeHistory.map((point, index) => {
+                    const x = financeHistory.length === 1 ? 20 : 20 + (index / (financeHistory.length - 1)) * 340;
+                    const y = 112 - ((point.finance - chartMin) / chartRange) * 92;
+                    return <circle key={`${point.round}-${index}`} cx={x} cy={y} r="3.5" fill={point.delta >= 0 ? '#34d399' : '#fb7185'} stroke="#0f172a" strokeWidth="2" />;
+                  })}
+                </svg>
+                <div className="mt-1 flex items-center justify-between text-[9px] font-mono text-slate-500"><span>Base: {financeHistory[0]?.finance ?? 0}</span><span>{financeHistory.length - 1} movimentações</span><span className={resources.finance >= (financeHistory[0]?.finance ?? 0) ? 'text-emerald-300' : 'text-rose-300'}>{resources.finance >= (financeHistory[0]?.finance ?? 0) ? 'saldo positivo' : 'saldo negativo'}</span></div>
+              </div>
           <div className="glass-panel rounded-2xl border border-amber-900/60 p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
@@ -581,7 +649,7 @@ export default function Home() {
         </section>
 
         {/* Right Side: Active Crisis, Real Science Data, Decision Cards */}
-        <section className={`${activeModule === 'decisions' ? 'lg:col-span-12' : 'hidden'}`}>
+        <section key={`module-right-${moduleTransition}`} className={`${activeModule === 'decisions' ? 'lg:col-span-12 animate-in fade-in slide-in-from-bottom-2 duration-500' : 'hidden'}`}>
           <CrisisCardView
             crisis={currentCrisis}
             resources={resources}
