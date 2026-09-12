@@ -25,3 +25,7 @@ The initial menu was visually rechecked after the polish pass. It now includes a
 ## Launch transition
 
 The menu-to-command transition was tested through the browser. Clicking Iniciar Campanha changes the button to “Inicializando centro de comando...”, shows the launch overlay with “Estabelecendo enlace planetário”, progress bar, and mode-specific loading text, then opens the command center with the entry animation. A final check also confirmed the campaign order now contains all 19 crises rather than the previous 15-phase residual.
+
+## Creators module
+
+Added a persistent Criadores module to the desktop and mobile navigation. Browser verification confirmed the panel renders all five requested names: Fernando, Tales, Viktor, Antônio, and Gabriel, with initials, roles, numbered cards, a team summary, and responsive layout. Existing Mapa, Economia, and Decisões navigation remains available.
