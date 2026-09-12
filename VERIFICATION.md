@@ -17,3 +17,7 @@ The campaign now visibly begins with Seca Severa and Colapso Hídrico, followed 
 ## Menu, tutorial, modes, and expanded crises
 
 The initial menu was visually verified with four selectable modes: Campanha, Survival, Sandbox, and Speedrun. The tutorial modal was opened and displayed four onboarding steps covering map reading, card choice, economy, and unexpected events. Survival was selected and started successfully; the interface showed the Survival badge, RODADA 1, and the reversed high-pressure crisis deck beginning with the pandemic crisis. The catalog now contains 19 ordered crisis entries, including energy, ocean, cyber infrastructure, and food logistics categories.
+
+## Menu polish
+
+The initial menu was visually rechecked after the polish pass. It now includes a clearer command-center hierarchy, animated atmospheric accents, a mission briefing panel that reflects the selected mode, risk/time/scale bars, and stronger spacing and contrast around the four mode cards. The menu remains responsive and the existing tutorial and mode-selection flow is preserved.

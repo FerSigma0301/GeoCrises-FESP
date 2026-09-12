@@ -206,8 +206,21 @@
     box-shadow: inset 0 0 70px rgba(14, 165, 233, 0.12);
   }
 
+  @keyframes menuFloat {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50% { transform: translate3d(0, -10px, 0) rotate(3deg); }
+  }
+
+  @keyframes menuPulse {
+    0%, 100% { opacity: 0.22; transform: scale(0.96); }
+    50% { opacity: 0.5; transform: scale(1.04); }
+  }
+
+  .menu-float { animation: menuFloat 7s ease-in-out infinite; }
+  .menu-pulse { animation: menuPulse 5s ease-in-out infinite; }
+
   @media (prefers-reduced-motion: reduce) {
-    .holo-sweep, .holo-breathe, .reward-float { animation: none; }
+    .holo-sweep, .holo-breathe, .reward-float, .menu-float, .menu-pulse { animation: none; }
   }
 
   /**
