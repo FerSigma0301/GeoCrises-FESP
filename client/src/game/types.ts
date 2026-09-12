@@ -31,6 +31,28 @@ export interface RevenueOpportunity {
   deltaSustainability: number;
 }
 
+export interface RiskContract {
+  id: string;
+  title: string;
+  brief: string;
+  stake: number;
+  reward: number;
+  threshold: number;
+  penaltyFinance: number;
+  penaltyLives: number;
+  penaltySustainability: number;
+}
+
+export interface MarketOffer {
+  id: string;
+  title: string;
+  sector: string;
+  basePrice: number;
+  volatility: number;
+  returnRate: number;
+  deltaSustainability: number;
+}
+
 export interface CrisisCard {
   id: string;
   name: string;

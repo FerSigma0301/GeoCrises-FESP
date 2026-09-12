@@ -6,7 +6,7 @@ import EventCardModal from '@/components/EventCardModal';
 import ScienceFairSurveyModal from '@/components/ScienceFairSurveyModal';
 import VictoryReportModal from '@/components/VictoryReportModal';
 import { CRISES_DATA } from '@/game/crisesData';
-import { PlayerResources, DecisionOption, FinalRank, RevenueOpportunity } from '@/game/types';
+import { PlayerResources, DecisionOption, FinalRank, RevenueOpportunity, RiskContract, MarketOffer } from '@/game/types';
 import type { CrisisImpact } from '@/game/scene';
 import { sounds } from '@/game/soundEffects';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,9 @@ import {
   Leaf,
   RotateCcw,
   Recycle,
+  ShieldCheck,
   Sparkles,
+  TrendingUp,
   Users,
   Volume2,
   VolumeX,
@@ -39,6 +41,22 @@ const REVENUE_OPPORTUNITIES: RevenueOpportunity[] = [
 ];
 
 const OPPORTUNITY_ICONS = { mercado: HandCoins, ciência: FlaskConical, comunidade: Sparkles, natureza: Recycle };
+
+const RISK_CONTRACTS: RiskContract[] = [
+  { id: 'rapid-response', title: 'Corredor de Resposta Rápida', brief: 'Proteja uma área crítica antes que a próxima onda de risco atinja o território.', stake: 120, reward: 520, threshold: 170, penaltyFinance: 220, penaltyLives: 1, penaltySustainability: 6 },
+  { id: 'resilience-bond', title: 'Bônus de Resiliência Territorial', brief: 'Prometa um salto de sustentabilidade e atraia capital paciente para a operação.', stake: 180, reward: 760, threshold: 210, penaltyFinance: 300, penaltyLives: 0, penaltySustainability: 14 },
+  { id: 'global-challenge', title: 'Desafio Global de Inovação', brief: 'Concorra com outras cidades por um prêmio internacional de adaptação climática.', stake: 90, reward: 430, threshold: 135, penaltyFinance: 160, penaltyLives: 0, penaltySustainability: 10 },
+];
+
+const MARKET_OFFERS: MarketOffer[] = [
+  { id: 'water-tech', title: 'Tecnologia Hídrica', sector: 'ÁGUA', basePrice: 180, volatility: 34, returnRate: 1.82, deltaSustainability: 8 },
+  { id: 'clean-energy', title: 'Energia Limpa', sector: 'ENERGIA', basePrice: 240, volatility: 48, returnRate: 1.72, deltaSustainability: 14 },
+  { id: 'agro-resilience', title: 'Agrofloresta Resiliente', sector: 'ALIMENTOS', basePrice: 150, volatility: 28, returnRate: 1.95, deltaSustainability: 18 },
+  { id: 'early-warning', title: 'Sensores de Alerta', sector: 'DADOS', basePrice: 110, volatility: 20, returnRate: 2.1, deltaSustainability: 7 },
+];
+
+const getMarketPrice = (offer: MarketOffer, round: number, index: number) =>
+  Math.max(60, Math.round(offer.basePrice + Math.sin(round * 1.7 + index * 1.9) * offer.volatility));
 
 export default function Home() {
   // PDR Initial Resources (Item 7):
@@ -57,6 +75,9 @@ export default function Home() {
   const [impacts, setImpacts] = useState<CrisisImpact[]>([]);
   const [decisionHistory, setDecisionHistory] = useState<Array<{ crisisId: string; crisisName: string; action: string; balance: number; result: string }>>([]);
   const [claimedOpportunities, setClaimedOpportunities] = useState<string[]>([]);
+  const [activeContract, setActiveContract] = useState<RiskContract | null>(null);
+  const [resolvedContracts, setResolvedContracts] = useState<string[]>([]);
+  const [marketPurchases, setMarketPurchases] = useState<string[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Modals state
@@ -107,6 +128,46 @@ export default function Home() {
     }));
   };
 
+  const handleSelectContract = (contract: RiskContract) => {
+    if (activeContract || resolvedContracts.includes(contract.id) || resources.finance < contract.stake) {
+      sounds.playWarning();
+      return;
+    }
+    sounds.playAlarm();
+    setActiveContract(contract);
+    setResources((prev) => ({ ...prev, finance: prev.finance - contract.stake }));
+  };
+
+  const handleMarketBuy = (offer: MarketOffer, price: number) => {
+    const purchaseKey = `${resources.round}-${offer.id}`;
+    if (marketPurchases.includes(purchaseKey) || resources.finance < price) {
+      sounds.playWarning();
+      return;
+    }
+    const payout = Math.round(price * offer.returnRate);
+    sounds.playSuccess();
+    setMarketPurchases((prev) => [...prev, purchaseKey]);
+    setResources((prev) => ({
+      ...prev,
+      finance: prev.finance - price + payout,
+      sustainability: Math.max(0, prev.sustainability + offer.deltaSustainability),
+    }));
+  };
+
+  const resolveRiskContract = (balance: number) => {
+    if (!activeContract) return;
+    const contract = activeContract;
+    const success = balance >= contract.threshold;
+    setResources((prev) => ({
+      ...prev,
+      finance: success ? prev.finance + contract.reward : Math.max(0, prev.finance - contract.penaltyFinance),
+      lives: success ? prev.lives : Math.max(0, prev.lives - contract.penaltyLives),
+      sustainability: success ? prev.sustainability + 4 : Math.max(0, prev.sustainability - contract.penaltySustainability),
+    }));
+    setResolvedContracts((prev) => [...prev, contract.id]);
+    setActiveContract(null);
+  };
+
   const handleSelectDecision = (option: DecisionOption) => {
     const newFinance = Math.max(0, resources.finance - option.costFinance);
     const newPop = resources.populationProtected + option.deltaPopulation;
@@ -123,6 +184,7 @@ export default function Home() {
 
     const balance = option.deltaPopulation + option.deltaSustainability * 2 + option.deltaXP / 2 - option.costFinance / 3;
     const result = balance >= 180 ? 'Recuperação forte' : balance >= 90 ? 'Equilíbrio positivo' : 'Resposta de alto custo';
+    resolveRiskContract(balance);
     setImpacts((prev) => [
       ...prev.filter((impact) => impact.crisisId !== currentCrisis.id),
       { crisisId: currentCrisis.id, balance, label: result },
@@ -196,6 +258,9 @@ export default function Home() {
     setImpacts([]);
     setDecisionHistory([]);
     setClaimedOpportunities([]);
+    setActiveContract(null);
+    setResolvedContracts([]);
+    setMarketPurchases([]);
     setIsGameOver(false);
     sounds.playClick();
   };
@@ -337,7 +402,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300"><DollarSign className="h-3.5 w-3.5" /> Economia de resiliência</div>
                 <p className="mt-1 text-sm font-semibold text-white">Crie recursos sem abandonar seus valores</p>
               </div>
-              <Sparkles className="h-5 w-5 text-amber-300" />
+              <Sparkles className="reward-float h-5 w-5 text-amber-300" />
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {REVENUE_OPPORTUNITIES.map((opportunity) => {
@@ -362,6 +427,69 @@ export default function Home() {
                       <span className="text-amber-300">+{opportunity.rewardFinance} fin.</span>
                       <span className={claimed ? 'text-emerald-300' : affordable ? 'text-purple-300' : 'text-rose-300'}>{claimed ? 'RESGATADO' : `-${opportunity.costXP} XP`}</span>
                     </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-2xl border border-rose-900/60 p-4 animate-in fade-in slide-in-from-left-2 duration-500">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-rose-300"><ShieldCheck className="h-3.5 w-3.5" /> Contratos de risco</div>
+                <p className="mt-1 text-sm font-semibold text-white">Aposte alto. Responda melhor.</p>
+              </div>
+              {activeContract ? <span className="animate-pulse rounded-full border border-rose-400/40 bg-rose-400/10 px-2 py-1 text-[9px] font-mono text-rose-200">EM EXECUÇÃO</span> : <span className="text-[10px] font-mono text-slate-500">1 contrato por vez</span>}
+            </div>
+            <div className="grid gap-2">
+              {RISK_CONTRACTS.map((contract) => {
+                const resolved = resolvedContracts.includes(contract.id);
+                const selected = activeContract?.id === contract.id;
+                const available = !activeContract && !resolved && resources.finance >= contract.stake;
+                return (
+                  <button
+                    key={contract.id}
+                    type="button"
+                    disabled={resolved || selected}
+                    onClick={() => handleSelectContract(contract)}
+                    className={`group rounded-xl border p-3 text-left transition-all duration-300 ${selected ? 'border-rose-400 bg-rose-950/40 shadow-lg shadow-rose-950/40' : resolved ? 'border-emerald-500/20 bg-emerald-950/10 opacity-55' : available ? 'border-slate-800 bg-slate-950/55 hover:-translate-y-0.5 hover:border-rose-500/60 hover:bg-rose-950/20' : 'border-slate-800/70 bg-slate-950/35 opacity-55'}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-bold text-white">{contract.title}</span>
+                      <span className="font-mono text-[10px] text-amber-300">+{contract.reward} pts</span>
+                    </div>
+                    <p className="mt-1 text-[10px] leading-relaxed text-slate-400">{contract.brief}</p>
+                    <div className="mt-2 flex items-center justify-between border-t border-slate-800 pt-2 text-[10px] font-mono">
+                      <span className="text-rose-300">Entrada -{contract.stake}</span>
+                      <span className="text-slate-500">Meta +{contract.threshold}</span>
+                      <span className={resolved ? 'text-emerald-300' : 'text-rose-400'}>{resolved ? 'RESOLVIDO' : `Falha: -${contract.penaltyFinance}`}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="glass-panel market-live rounded-2xl border border-violet-900/60 p-4 animate-in fade-in slide-in-from-left-2 duration-700">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-violet-300"><TrendingUp className="h-3.5 w-3.5" /> Mercado dinâmico</div>
+                <p className="mt-1 text-sm font-semibold text-white">Oportunidades mudam a cada rodada</p>
+              </div>
+              <span className="rounded-full border border-violet-400/25 bg-violet-400/10 px-2 py-1 text-[9px] font-mono text-violet-200">RODADA {resources.round}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {MARKET_OFFERS.map((offer, index) => {
+                const price = getMarketPrice(offer, resources.round, index);
+                const purchaseKey = `${resources.round}-${offer.id}`;
+                const bought = marketPurchases.includes(purchaseKey);
+                const profit = Math.round(price * (offer.returnRate - 1));
+                const canBuy = resources.finance >= price && !bought;
+                return (
+                  <button key={offer.id} type="button" disabled={bought} onClick={() => handleMarketBuy(offer, price)} className={`rounded-xl border p-3 text-left transition-all duration-300 ${bought ? 'border-emerald-500/25 bg-emerald-950/15 opacity-65' : canBuy ? 'border-slate-800 bg-slate-950/55 hover:-translate-y-0.5 hover:border-violet-500/60' : 'border-slate-800/70 bg-slate-950/35 opacity-55'}`}>
+                    <div className="flex items-center justify-between text-[9px] font-mono"><span className="text-violet-300">{offer.sector}</span><span className={price <= offer.basePrice ? 'text-emerald-300' : 'text-amber-300'}>{price <= offer.basePrice ? '▼' : '▲'} {price}</span></div>
+                    <p className="mt-1 text-xs font-bold text-white">{offer.title}</p>
+                    <div className="mt-2 flex items-center justify-between text-[10px] font-mono"><span className="text-emerald-300">retorno +{profit}</span><span className={bought ? 'text-emerald-300' : 'text-slate-500'}>{bought ? 'ADQUIRIDO' : `risco ±${offer.volatility}`}</span></div>
                   </button>
                 );
               })}
