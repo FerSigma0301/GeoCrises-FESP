@@ -104,6 +104,7 @@ export default function Home() {
   const [gameMode, setGameMode] = useState<GameMode>('campaign');
   const [gameStarted, setGameStarted] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [creatorsOpen, setCreatorsOpen] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const [commandEntering, setCommandEntering] = useState(false);
   // PDR Initial Resources (Item 7):
@@ -444,12 +445,16 @@ export default function Home() {
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-10 lg:py-10">
         <div className="menu-pulse pointer-events-none absolute -left-20 top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="menu-float pointer-events-none absolute right-[34%] top-16 hidden h-24 w-24 rounded-full border border-cyan-300/10 bg-cyan-400/5 blur-[1px] lg:block" />
+        <div className="pointer-events-none absolute right-[-7rem] top-[30%] hidden h-[31rem] w-[31rem] opacity-80 lg:block" aria-hidden="true"><div className="menu-orbit flex h-full w-full items-center justify-center"><div className="menu-orbit flex h-[76%] w-[76%] items-center justify-center"><div className="menu-planet h-44 w-44 rounded-full" /></div></div></div>
           <header className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 via-cyan-400 to-emerald-400 text-xl shadow-lg shadow-cyan-500/25">🌍</span>
               <div><p className="text-lg font-black tracking-tight text-white">GeoCrisis</p><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Centro de comando planetário</p></div>
             </div>
-            <button type="button" onClick={openTutorial} className="flex items-center gap-2 rounded-xl border border-sky-800/70 bg-slate-950/60 px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/70 hover:text-white"><BookOpen className="h-4 w-4 text-cyan-300" /> Como jogar</button>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setCreatorsOpen(true)} className="flex items-center gap-2 rounded-xl border border-violet-800/70 bg-slate-950/60 px-3 py-2 text-xs text-slate-300 transition hover:border-violet-400/70 hover:text-white"><Users className="h-4 w-4 text-violet-300" /> Criadores</button>
+              <button type="button" onClick={openTutorial} className="flex items-center gap-2 rounded-xl border border-sky-800/70 bg-slate-950/60 px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/70 hover:text-white"><BookOpen className="h-4 w-4 text-cyan-300" /> Como jogar</button>
+            </div>
           </header>
 
           <main className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[0.9fr_1.1fr]">
@@ -457,8 +462,8 @@ export default function Home() {
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-200"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" /> Simulação online · Terra em estado crítico</div>
               <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.04em] text-white sm:text-7xl">Decida o futuro.<br /><span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-emerald-300 bg-clip-text text-transparent">Proteja o mundo.</span></h1>
               <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-400">Você lidera uma central de resposta global. Equilibre economia, população e sustentabilidade enquanto crises reais se encadeiam no mapa.</p>
-              <div className="mt-8 grid grid-cols-3 gap-2 text-center text-[10px] font-mono uppercase tracking-wider text-slate-500"><div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><strong className="block text-lg text-cyan-300">19</strong>crises</div><div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><strong className="block text-lg text-amber-300">4</strong>modos</div><div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><strong className="block text-lg text-emerald-300">∞</strong>estratégias</div></div>
-              <div className="mt-5 rounded-2xl border border-sky-900/60 bg-slate-950/55 p-4 backdrop-blur-sm"><div className="flex items-center justify-between"><span className="text-[10px] font-mono uppercase tracking-[0.2em] text-sky-300">Briefing da missão</span><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" /></div><div className="mt-3 flex items-center gap-3"><span className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 p-2 text-cyan-200"><Crosshair className="h-5 w-5" /></span><div><p className="text-sm font-bold text-white">{MODE_DETAILS[gameMode].title}</p><p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">{MODE_DETAILS[gameMode].subtitle}</p></div></div><div className="mt-4 grid grid-cols-3 gap-2"><div><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-600"><span>Risco</span><span>{gameMode === 'survival' ? 'ALTO' : 'MÉDIO'}</span></div><div className="h-1 rounded-full bg-slate-800"><div className={`h-full rounded-full ${gameMode === 'survival' ? 'w-[92%] bg-rose-400' : gameMode === 'sandbox' ? 'w-[18%] bg-emerald-400' : 'w-[58%] bg-amber-400'}`} /></div></div><div><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-600"><span>Tempo</span><span>{gameMode === 'speedrun' ? 'URGENTE' : 'LIVRE'}</span></div><div className="h-1 rounded-full bg-slate-800"><div className={`h-full rounded-full ${gameMode === 'speedrun' ? 'w-[96%] bg-amber-400' : 'w-[42%] bg-cyan-400'}`} /></div></div><div><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-600"><span>Escala</span><span>{gameMode === 'survival' ? '∞' : gameMode === 'speedrun' ? '10' : '19'}</span></div><div className="h-1 rounded-full bg-slate-800"><div className="h-full w-[74%] rounded-full bg-sky-400" /></div></div></div></div>
+              <div className="mt-8 grid grid-cols-3 gap-2 text-center text-[10px] font-mono uppercase tracking-wider text-slate-500"><div className="card-sheen rounded-xl border border-slate-800 bg-slate-950/60 p-3 shadow-lg shadow-slate-950/20"><strong className="block text-lg text-cyan-300">19</strong>crises reais</div><div className="card-sheen rounded-xl border border-slate-800 bg-slate-950/60 p-3 shadow-lg shadow-slate-950/20"><strong className="block text-lg text-amber-300">4</strong>modos de jogo</div><div className="card-sheen rounded-xl border border-slate-800 bg-slate-950/60 p-3 shadow-lg shadow-slate-950/20"><strong className="block text-lg text-emerald-300">∞</strong>estratégias</div></div>
+              <div className="hud-corner mt-5 rounded-2xl border border-sky-900/60 bg-slate-950/55 p-4 backdrop-blur-sm"><div className="flex items-center justify-between"><span className="text-[10px] font-mono uppercase tracking-[0.2em] text-sky-300">Briefing da missão</span><span className="flex items-center gap-1.5 text-[9px] font-mono uppercase text-emerald-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" /> enlace ativo</span></div><div className="mt-3 flex items-center gap-3"><span className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 p-2 text-cyan-200 shadow-lg shadow-cyan-500/10"><Crosshair className="h-5 w-5" /></span><div><p className="text-sm font-bold text-white">{MODE_DETAILS[gameMode].title}</p><p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">{MODE_DETAILS[gameMode].subtitle}</p></div></div><div className="mt-4 grid grid-cols-3 gap-2"><div><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-600"><span>Risco</span><span>{gameMode === 'survival' ? 'ALTO' : 'MÉDIO'}</span></div><div className="h-1 rounded-full bg-slate-800"><div className={`h-full rounded-full ${gameMode === 'survival' ? 'w-[92%] bg-rose-400' : gameMode === 'sandbox' ? 'w-[18%] bg-emerald-400' : 'w-[58%] bg-amber-400'}`} /></div></div><div><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-600"><span>Tempo</span><span>{gameMode === 'speedrun' ? 'URGENTE' : 'LIVRE'}</span></div><div className="h-1 rounded-full bg-slate-800"><div className={`h-full rounded-full ${gameMode === 'speedrun' ? 'w-[96%] bg-amber-400' : 'w-[42%] bg-cyan-400'}`} /></div></div><div><div className="mb-1 flex justify-between text-[9px] font-mono text-slate-600"><span>Escala</span><span>{gameMode === 'survival' ? '∞' : gameMode === 'speedrun' ? '10' : '19'}</span></div><div className="h-1 rounded-full bg-slate-800"><div className="h-full w-[74%] rounded-full bg-sky-400" /></div></div></div></div>
             </section>
 
             <section className="glass-panel rounded-3xl border border-sky-900/60 p-4 shadow-2xl shadow-cyan-950/20 sm:p-6">
@@ -468,7 +473,7 @@ export default function Home() {
                   const details = MODE_DETAILS[mode];
                   const Icon = details.icon;
                   const selected = gameMode === mode;
-                  return <button key={mode} type="button" onClick={() => setGameMode(mode)} className={`group rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-1 ${selected ? 'border-cyan-400/70 bg-cyan-400/10 shadow-lg shadow-cyan-500/10' : 'border-slate-800 bg-slate-950/60 hover:border-slate-600'}`}><div className="flex items-start justify-between"><span className={`rounded-xl p-2 ${selected ? 'bg-cyan-400/15 text-cyan-200' : 'bg-slate-800/70 text-slate-400'}`}><Icon className="h-5 w-5" /></span>{selected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[9px] font-mono uppercase text-emerald-300">selecionado</span>}</div><p className="mt-4 font-bold text-white">{details.title}</p><p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300/80">{details.subtitle}</p><p className="mt-3 text-xs leading-relaxed text-slate-400">{details.description}</p></button>;
+                  return <button key={mode} type="button" onClick={() => setGameMode(mode)} className={`card-sheen group rounded-2xl border p-4 text-left transition-all duration-300 hover:-translate-y-1.5 ${selected ? 'border-cyan-400/70 bg-cyan-400/10 shadow-xl shadow-cyan-500/15 ring-1 ring-cyan-400/20' : 'border-slate-800 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/75'}`}><div className="flex items-start justify-between"><span className={`rounded-xl p-2.5 transition-transform duration-300 group-hover:scale-110 ${selected ? 'bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'bg-slate-800/70 text-slate-400'}`}><Icon className="h-5 w-5" /></span>{selected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[9px] font-mono uppercase text-emerald-300">selecionado</span>}</div><p className="mt-4 font-bold text-white">{details.title}</p><p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300/80">{details.subtitle}</p><p className="mt-3 text-xs leading-relaxed text-slate-400">{details.description}</p><div className={`mt-4 h-px w-2/3 bg-gradient-to-r ${selected ? 'from-cyan-300/70' : 'from-slate-700'} to-transparent`} /></button>;
                 })}
               </div>
               <Button disabled={isLaunching} onClick={() => startGame(gameMode)} className="mt-5 h-12 w-full gap-2 bg-gradient-to-r from-cyan-500 to-sky-500 font-bold text-slate-950 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-sky-400 disabled:opacity-80">{isLaunching ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-950" /> Inicializando centro de comando...</> : <><Crosshair className="h-4 w-4" /> Iniciar {MODE_DETAILS[gameMode].title}</>}</Button>
@@ -478,6 +483,8 @@ export default function Home() {
         </div>
 
         {isLaunching && <div className="launch-overlay fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/95"><div className="launch-core text-center"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-cyan-300/60 bg-cyan-400/10 shadow-[0_0_80px_rgba(34,211,238,0.35)]"><span className="h-5 w-5 animate-ping rounded-full bg-cyan-300" /></div><p className="mt-6 text-[10px] font-mono uppercase tracking-[0.35em] text-cyan-300">Estabelecendo enlace planetário</p><div className="mx-auto mt-4 h-1 w-56 overflow-hidden rounded-full bg-slate-800"><div className="launch-progress h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-300" /></div><p className="mt-3 text-xs text-slate-500">Carregando {MODE_DETAILS[gameMode].title} · sincronizando dados territoriais</p></div></div>}
+
+        {creatorsOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"><div className="w-full max-w-4xl rounded-3xl border border-violet-800/60 bg-slate-950 p-6 shadow-2xl shadow-violet-950/40 sm:p-8"><div className="flex items-start justify-between"><div><p className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-violet-300"><Users className="h-4 w-4" /> Créditos da equipe</p><h2 className="mt-2 text-3xl font-black tracking-tight text-white">Os criadores do GeoCrisis</h2><p className="mt-2 text-sm text-slate-400">As pessoas por trás da missão de proteger o planeta.</p></div><button type="button" onClick={() => setCreatorsOpen(false)} className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{CREATORS.map((creator, index) => <div key={creator.name} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition hover:-translate-y-1 hover:border-violet-400/50"><div className={`flex h-12 w-12 items-center justify-center rounded-xl border text-sm font-black ${creator.tone}`}>{creator.initials}</div><p className="mt-4 text-sm font-bold text-white">{creator.name}</p><p className="mt-1 text-[10px] font-mono uppercase leading-relaxed tracking-wider text-violet-300/80">{creator.role}</p><span className="mt-4 block text-[9px] font-mono text-slate-600">0{index + 1} / TEAM</span></div>)}</div><div className="mt-6 flex items-center gap-3 rounded-2xl border border-violet-900/50 bg-violet-950/15 p-4"><Sparkles className="h-5 w-5 shrink-0 text-violet-300" /><p className="text-xs text-slate-400">Ciência, criatividade e tecnologia reunidas em uma experiência de decisões reais.</p></div></div></div>}
 
         {tutorialOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-cyan-800/60 bg-slate-950 p-6 shadow-2xl shadow-cyan-950/40"><div className="flex items-start justify-between"><div><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Protocolo de iniciação</p><h2 className="mt-1 text-2xl font-bold text-white">Como jogar GeoCrisis</h2></div><button type="button" onClick={() => setTutorialOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-6 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border border-sky-900/60 bg-sky-950/20 p-4"><span className="text-2xl">01</span><p className="mt-3 font-bold text-white">Leia o território</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Use o Mapa para localizar cada crise e entender seus conceitos geográficos.</p></div><div className="rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4"><span className="text-2xl">02</span><p className="mt-3 font-bold text-white">Escolha uma carta</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Compare custo, população, sustentabilidade e XP. Categorias diferentes ativam sinergias.</p></div><div className="rounded-2xl border border-emerald-900/60 bg-emerald-950/20 p-4"><span className="text-2xl">03</span><p className="mt-3 font-bold text-white">Construa recursos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Na Economia, resgate oportunidades, aceite contratos e invista no mercado dinâmico.</p></div><div className="rounded-2xl border border-rose-900/60 bg-rose-950/20 p-4"><span className="text-2xl">04</span><p className="mt-3 font-bold text-white">Aceite os eventos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Crises inesperadas mudam o cenário. Preserve vidas e mantenha o equilíbrio do sistema.</p></div></div><Button onClick={() => setTutorialOpen(false)} className="mt-6 w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400">Entendi, iniciar operação</Button></div></div>}
       </div>
@@ -490,8 +497,8 @@ export default function Home() {
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-sky-900/60 px-4 py-2.5 shadow-[0_10px_35px_rgba(2,6,23,0.55)]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           {/* Logo and Subtitle */}
-          <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-cyan-400 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/25 text-lg ring-1 ring-white/15">
+            <div className="flex items-center gap-3">
+            <span className="menu-planet flex h-10 w-10 items-center justify-center rounded-2xl text-lg ring-1 ring-white/15">
               🌍
             </span>
             <div>
@@ -510,7 +517,7 @@ export default function Home() {
           {/* Resources Dashboard (Item 7) */}
           <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
             {/* Finance */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-amber-500/30 text-amber-300 shadow-inner shadow-amber-500/5">
+            <div className="resource-chip hud-corner flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-slate-950/70 px-3 py-1.5 text-amber-300 shadow-inner shadow-amber-500/5">
               <DollarSign className="w-4 h-4 text-amber-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">Finanças</span>
@@ -519,7 +526,7 @@ export default function Home() {
             </div>
 
             {/* Protected Population */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-sky-500/30 text-sky-300 shadow-inner shadow-sky-500/5">
+            <div className="resource-chip hud-corner flex items-center gap-1.5 rounded-xl border border-sky-500/30 bg-slate-950/70 px-3 py-1.5 text-sky-300 shadow-inner shadow-sky-500/5">
               <Users className="w-4 h-4 text-sky-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">População</span>
@@ -528,7 +535,7 @@ export default function Home() {
             </div>
 
             {/* Sustainability */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-emerald-500/30 text-emerald-300 shadow-inner shadow-emerald-500/5">
+            <div className="resource-chip hud-corner flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-slate-950/70 px-3 py-1.5 text-emerald-300 shadow-inner shadow-emerald-500/5">
               <Leaf className="w-4 h-4 text-emerald-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">Sustentabilidade</span>
@@ -537,7 +544,7 @@ export default function Home() {
             </div>
 
             {/* Lives / Response Capacity */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-rose-500/30 text-rose-300 shadow-inner shadow-rose-500/5">
+            <div className="resource-chip hud-corner flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-slate-950/70 px-3 py-1.5 text-rose-300 shadow-inner shadow-rose-500/5">
               <Heart className="w-4 h-4 text-rose-400 fill-rose-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">Capacidade</span>
@@ -546,7 +553,7 @@ export default function Home() {
             </div>
 
             {/* XP */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-purple-500/30 text-purple-300 shadow-inner shadow-purple-500/5">
+            <div className="resource-chip hud-corner flex items-center gap-1.5 rounded-xl border border-purple-500/30 bg-slate-950/70 px-3 py-1.5 text-purple-300 shadow-inner shadow-purple-500/5">
               <Zap className="w-4 h-4 text-purple-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">XP</span>
@@ -592,7 +599,7 @@ export default function Home() {
           ].map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
-            return <button key={item.id} type="button" onClick={() => switchModule(item.id)} title={item.label} className={`group flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 ${active ? 'border-cyan-400/60 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-500 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-200'}`}><Icon className="h-4 w-4 transition-transform group-hover:scale-110" /></button>;
+            return <button key={item.id} type="button" onClick={() => switchModule(item.id)} title={item.label} className={`group relative flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 ${active ? 'border-cyan-400/60 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-500 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-200'}`}><Icon className="h-4 w-4 transition-transform group-hover:scale-110" />{active && <span className="absolute -right-1 h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.9)]" />}</button>;
           })}
         </div>
         <span className="text-[9px] font-mono text-slate-600 [writing-mode:vertical-rl]">GEOCRISIS</span>

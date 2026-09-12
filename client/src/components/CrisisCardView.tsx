@@ -45,12 +45,13 @@ export default function CrisisCardView({
   };
 
   return (
-    <div className="glass-panel border border-sky-800/50 rounded-2xl p-5 lg:p-6 shadow-2xl flex flex-col gap-5 text-slate-100">
+    <div className="glass-panel hud-corner border border-sky-800/50 rounded-3xl p-5 lg:p-7 shadow-2xl flex flex-col gap-5 text-slate-100">
       {/* Header and Crisis Category Badge */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-900/60 pb-4">
         <div className="flex items-center gap-3">
-          <span className="p-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/40">
+          <span className="relative p-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-lg shadow-rose-950/30">
             <ShieldAlert className="w-6 h-6 animate-pulse" />
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-300 shadow-[0_0_10px_rgba(251,113,133,0.9)]" />
           </span>
           <div>
             <div className="flex items-center gap-2">
@@ -59,7 +60,7 @@ export default function CrisisCardView({
                 {crisis.location}
               </Badge>
             </div>
-            <h2 className="text-2xl lg:text-[28px] font-black tracking-tight text-white mt-0.5">{crisis.name}</h2>
+            <h2 className="text-2xl lg:text-[30px] font-black tracking-tight text-white mt-0.5">{crisis.name}</h2>
           </div>
         </div>
 
@@ -111,7 +112,7 @@ export default function CrisisCardView({
 
       {/* Main Crisis Image and Context */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-        <div className="md:col-span-5 relative rounded-xl overflow-hidden border border-slate-700/60 group min-h-[220px]">
+          <div className="card-sheen md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/60 group min-h-[220px] shadow-xl shadow-slate-950/40">
           <img
             src={crisis.image}
             alt={crisis.name}
@@ -132,7 +133,7 @@ export default function CrisisCardView({
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-1.5 font-mono">
               Diagnóstico do Território
             </h3>
-            <p className="text-slate-200 text-sm leading-relaxed mb-4 bg-slate-950/50 p-3.5 rounded-xl border border-slate-800">
+            <p className="text-slate-200 text-sm leading-relaxed mb-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 shadow-inner shadow-slate-950/30">
               {crisis.scientificDescription}
             </p>
           </div>
@@ -183,7 +184,7 @@ export default function CrisisCardView({
                 }}
                 role="button"
                 tabIndex={isAffordable ? 0 : -1}
-                className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1 ${
+                className={`card-sheen p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1 ${
                   isSelected
                     ? 'border-sky-400 bg-gradient-to-br from-sky-950/80 to-slate-950/80 shadow-xl shadow-sky-500/20 ring-1 ring-sky-400 -translate-y-1'
                     : isAffordable
@@ -250,7 +251,7 @@ export default function CrisisCardView({
         <Button
           disabled={!selectedOption || resources.finance < (selectedOption?.costFinance || 0)}
           onClick={handleConfirmDecision}
-          className="bg-sky-600 hover:bg-sky-500 text-white font-semibold px-6 shadow-lg shadow-sky-600/30 gap-2"
+          className="h-11 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-950 font-bold px-6 shadow-lg shadow-sky-600/30 gap-2 transition-transform active:scale-[0.98]"
         >
           <TrendingUp className="w-4 h-4" />
           Executar Decisão Estratégica
