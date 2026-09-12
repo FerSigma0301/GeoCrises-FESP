@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import GlobeCanvas from '@/components/GlobeCanvas';
 import CrisisCardView from '@/components/CrisisCardView';
 import KnowledgeQuizModal from '@/components/KnowledgeQuizModal';
@@ -28,6 +29,7 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  X,
   Users,
   Volume2,
   VolumeX,
@@ -59,6 +61,17 @@ const MARKET_OFFERS: MarketOffer[] = [
 const getMarketPrice = (offer: MarketOffer, round: number, index: number) =>
   Math.max(60, Math.round(offer.basePrice + Math.sin(round * 1.7 + index * 1.9) * offer.volatility));
 
+type ActionFeedback = {
+  title: string;
+  detail: string;
+  finance: number;
+  population: number;
+  sustainability: number;
+  lives: number;
+  xp: number;
+  synergy?: string;
+};
+
 export default function Home() {
   // PDR Initial Resources (Item 7):
   // Finanças: 1000 | População: 100 | Sustentabilidade: 50 | Vidas: 3 | XP: 0
@@ -88,6 +101,8 @@ export default function Home() {
   const [financeHistory, setFinanceHistory] = useState<Array<{ round: number; finance: number; delta: number; label: string }>>([
     { round: 1, finance: 1000, delta: 0, label: 'Base' },
   ]);
+  const [actionFeedback, setActionFeedback] = useState<ActionFeedback | null>(null);
+  const [lastDecisionCategory, setLastDecisionCategory] = useState<DecisionOption['category'] | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Modals state
@@ -99,7 +114,7 @@ export default function Home() {
   // AutoPilot / Demo mode query parameter support
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has('demo')) {
+    if (params.get('demo') === '1' || params.get('demo') === 'true') {
       const demoTimer = setTimeout(() => {
         // Automatically make a balanced decision in demo mode
         const firstOpt = CRISES_DATA[0].options[0];
@@ -197,9 +212,12 @@ export default function Home() {
   };
 
   const handleSelectDecision = (option: DecisionOption) => {
+    const synergyActive = Boolean(lastDecisionCategory && lastDecisionCategory !== option.category);
+    const synergyBonus = synergyActive ? 45 : 0;
+    const synergyPopulation = synergyActive ? 35 : 0;
     const newFinance = Math.max(0, resources.finance - option.costFinance);
-    const newPop = resources.populationProtected + option.deltaPopulation;
-    const newSust = Math.max(0, resources.sustainability + option.deltaSustainability);
+    const newPop = resources.populationProtected + option.deltaPopulation + synergyPopulation;
+    const newSust = Math.max(0, resources.sustainability + option.deltaSustainability + (synergyActive ? 8 : 0));
     const newXP = resources.xp + option.deltaXP;
 
     setResources((prev) => ({
@@ -210,8 +228,24 @@ export default function Home() {
       xp: newXP
     }));
 
-    const balance = option.deltaPopulation + option.deltaSustainability * 2 + option.deltaXP / 2 - option.costFinance / 3;
+    const balance = option.deltaPopulation + option.deltaSustainability * 2 + option.deltaXP / 2 - option.costFinance / 3 + synergyBonus;
     const result = balance >= 180 ? 'Recuperação forte' : balance >= 90 ? 'Equilíbrio positivo' : 'Resposta de alto custo';
+    const feedback: ActionFeedback = {
+      title: synergyActive ? 'Sinergia ativada' : 'Decisão executada',
+      detail: synergyActive ? 'A combinação de frentes diferentes criou uma resposta multissetorial mais eficiente.' : 'A operação foi aplicada ao território e seus efeitos já aparecem no painel.',
+      finance: -option.costFinance,
+      population: option.deltaPopulation + synergyPopulation,
+      sustainability: option.deltaSustainability + (synergyActive ? 8 : 0),
+      lives: 0,
+      xp: option.deltaXP,
+      synergy: synergyActive ? '+45 equilíbrio · +35 população · +8 sustentabilidade' : undefined,
+    };
+    setActionFeedback(feedback);
+    if (synergyActive) {
+      confetti({ particleCount: 35, spread: 55, startVelocity: 22, colors: ['#34d399', '#fbbf24', '#38bdf8'], origin: { x: 0.78, y: 0.72 } });
+    }
+    window.setTimeout(() => setActionFeedback(null), 3200);
+    setLastDecisionCategory(option.category);
     recordFinance(newFinance, currentCrisis.name);
     resolveRiskContract(balance);
     setImpacts((prev) => [
@@ -248,6 +282,18 @@ export default function Home() {
       };
     });
 
+    const eventImpact = activeEvent.impact;
+    setActionFeedback({
+      title: 'Evento resolvido',
+      detail: activeEvent.title,
+      finance: eventImpact.finance || 0,
+      population: eventImpact.population || 0,
+      sustainability: eventImpact.sustainability || 0,
+      lives: eventImpact.lives || 0,
+      xp: 0,
+    });
+    window.setTimeout(() => setActionFeedback(null), 3200);
+
     setActiveEvent(null);
     advanceRound();
   };
@@ -274,6 +320,8 @@ export default function Home() {
     setImpacts([]);
     setDecisionHistory([]);
     setFinanceHistory([{ round: 1, finance: initialResources.finance, delta: 0, label: 'Base' }]);
+    setLastDecisionCategory(null);
+    setActionFeedback(null);
     setClaimedOpportunities([]);
     setActiveContract(null);
     setResolvedContracts([]);
@@ -284,6 +332,8 @@ export default function Home() {
 
   // Calculate Total Score (Item 10 and 11 do PDR)
   const totalScore = resources.populationProtected + resources.sustainability * 2 + resources.xp + resources.finance / 2;
+  const playerLevel = 1 + Math.floor(resources.xp / 250);
+  const nextLevelXP = (playerLevel * 250) - resources.xp;
 
   let finalRank: FinalRank = 'Gestor Iniciante 🥉';
   if (totalScore >= 2000) finalRank = 'Líder Global 🌎';
@@ -365,7 +415,8 @@ export default function Home() {
               <Zap className="w-4 h-4 text-purple-400" />
               <div>
                 <span className="text-[10px] text-slate-400 block -mb-0.5">XP</span>
-                <span className="font-bold">{resources.xp} XP</span>
+                <span className="font-bold">{resources.xp} XP · Nível {playerLevel}</span>
+                <span className="block text-[9px] text-purple-300/70">{nextLevelXP > 0 ? `${nextLevelXP} XP para o próximo nível` : 'Novo nível disponível'}</span>
               </div>
             </div>
           </div>
@@ -659,6 +710,29 @@ export default function Home() {
           />
         </section>
       </main>
+
+      {actionFeedback && (
+        <div className="fixed bottom-5 right-5 z-50 w-[min(92vw,390px)] animate-in fade-in slide-in-from-bottom-4 duration-300" role="status" aria-live="polite">
+          <div className="rounded-2xl border border-cyan-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">RESUMO DA RODADA</p>
+                <h3 className="mt-1 text-base font-black text-white">{actionFeedback.title}</h3>
+              </div>
+              <button type="button" onClick={() => setActionFeedback(null)} className="rounded-lg p-1 text-slate-500 hover:bg-slate-800 hover:text-white" aria-label="Fechar resumo"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-slate-300">{actionFeedback.detail}</p>
+            <div className="mt-3 grid grid-cols-5 gap-2 border-t border-slate-800 pt-3 text-center font-mono text-[10px]">
+              <div><span className="block text-slate-500">FIN</span><strong className={actionFeedback.finance >= 0 ? 'text-emerald-300' : 'text-rose-300'}>{actionFeedback.finance >= 0 ? '+' : ''}{actionFeedback.finance}</strong></div>
+              <div><span className="block text-slate-500">POP</span><strong className={actionFeedback.population >= 0 ? 'text-sky-300' : 'text-rose-300'}>{actionFeedback.population >= 0 ? '+' : ''}{actionFeedback.population}</strong></div>
+              <div><span className="block text-slate-500">SUST</span><strong className={actionFeedback.sustainability >= 0 ? 'text-emerald-300' : 'text-rose-300'}>{actionFeedback.sustainability >= 0 ? '+' : ''}{actionFeedback.sustainability}</strong></div>
+              <div><span className="block text-slate-500">VIDAS</span><strong className={actionFeedback.lives >= 0 ? 'text-rose-200' : 'text-rose-400'}>{actionFeedback.lives >= 0 ? '+' : ''}{actionFeedback.lives}</strong></div>
+              <div><span className="block text-slate-500">XP</span><strong className="text-purple-300">+{actionFeedback.xp}</strong></div>
+            </div>
+            {actionFeedback.synergy && <div className="mt-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-[10px] font-mono text-amber-200">COMBO MULTISSETORIAL · {actionFeedback.synergy}</div>}
+          </div>
+        </div>
+      )}
 
       {/* Modals for Complete PDR Loop */}
       <KnowledgeQuizModal

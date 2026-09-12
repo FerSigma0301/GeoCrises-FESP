@@ -162,6 +162,8 @@ export default function CrisisCardView({
           {crisis.options.map((opt) => {
             const isAffordable = resources.finance >= opt.costFinance;
             const isSelected = selectedOption?.id === opt.id;
+            const powerScore = opt.deltaPopulation + opt.deltaSustainability * 3 + opt.deltaXP / 2 - opt.costFinance / 4;
+            const rarity = powerScore >= 360 ? { label: 'ÉPICA', color: 'border-amber-400/70 bg-amber-400/10 text-amber-200' } : powerScore >= 230 ? { label: 'RARA', color: 'border-violet-400/60 bg-violet-400/10 text-violet-200' } : { label: 'COMUM', color: 'border-slate-700 bg-slate-800/40 text-slate-400' };
 
             return (
               <div
@@ -181,17 +183,18 @@ export default function CrisisCardView({
                 }}
                 role="button"
                 tabIndex={isAffordable ? 0 : -1}
-                className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1 ${
                   isSelected
-                    ? 'border-sky-400 bg-gradient-to-br from-sky-950/80 to-slate-950/80 shadow-lg shadow-sky-500/15 ring-1 ring-sky-400 -translate-y-0.5'
+                    ? 'border-sky-400 bg-gradient-to-br from-sky-950/80 to-slate-950/80 shadow-xl shadow-sky-500/20 ring-1 ring-sky-400 -translate-y-1'
                     : isAffordable
-                    ? 'border-slate-800 bg-slate-950/60 hover:border-cyan-700/70 hover:bg-slate-900 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-950/20'
+                    ? 'border-slate-800 bg-slate-950/60 hover:border-cyan-700/70 hover:bg-slate-900 hover:shadow-lg hover:shadow-cyan-950/20'
                     : 'border-red-900/40 bg-red-950/10 opacity-60 cursor-not-allowed'
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <div>
+                      <span className={`mb-2 mr-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-wider ${rarity.color}`}>{rarity.label}</span>
                       <span className={`mb-2 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-wider ${categoryMeta[opt.category].color}`}>
                         {categoryMeta[opt.category].label}
                       </span>
@@ -200,6 +203,12 @@ export default function CrisisCardView({
                     {isSelected && <CheckCircle className="w-4 h-4 text-sky-400 shrink-0" />}
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed mb-3">{opt.description}</p>
+                  <div className="mb-1 flex items-end gap-1.5" aria-label="Comparador de impacto">
+                    <span className="h-1.5 flex-1 rounded-full bg-sky-400/80" style={{ opacity: Math.min(1, Math.max(0.2, opt.deltaPopulation / 450)) }} />
+                    <span className="h-1.5 flex-1 rounded-full bg-emerald-400/80" style={{ opacity: Math.min(1, Math.max(0.2, (opt.deltaSustainability + 20) / 80)) }} />
+                    <span className="h-1.5 flex-1 rounded-full bg-purple-400/80" style={{ opacity: Math.min(1, Math.max(0.2, opt.deltaXP / 200)) }} />
+                  </div>
+                  <div className="mb-2 flex justify-between text-[9px] font-mono text-slate-600"><span>população</span><span>sustentabilidade</span><span>XP</span></div>
                 </div>
 
                 <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
