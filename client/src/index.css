@@ -219,8 +219,34 @@
   .menu-float { animation: menuFloat 7s ease-in-out infinite; }
   .menu-pulse { animation: menuPulse 5s ease-in-out infinite; }
 
+  @keyframes menuLaunch {
+    0% { opacity: 1; transform: scale(1); filter: blur(0); }
+    100% { opacity: 0; transform: scale(1.06); filter: blur(8px); }
+  }
+
+  @keyframes launchCore {
+    0% { opacity: 0; transform: scale(0.82); }
+    30%, 78% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.12); }
+  }
+
+  @keyframes launchProgress {
+    0% { width: 0; }
+    100% { width: 100%; }
+  }
+
+  @keyframes commandEnter {
+    0% { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(5px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+
+  .menu-launching > *:not(.launch-overlay) { animation: menuLaunch 520ms cubic-bezier(0.77, 0, 0.175, 1) forwards; }
+  .launch-core { animation: launchCore 520ms ease-out both; }
+  .launch-progress { animation: launchProgress 520ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .command-enter > * { animation: commandEnter 720ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+
   @media (prefers-reduced-motion: reduce) {
-    .holo-sweep, .holo-breathe, .reward-float, .menu-float, .menu-pulse { animation: none; }
+    .holo-sweep, .holo-breathe, .reward-float, .menu-float, .menu-pulse, .menu-launching > *:not(.launch-overlay), .launch-core, .launch-progress, .command-enter > * { animation: none; }
   }
 
   /**

@@ -1225,6 +1225,7 @@ const CAMPAIGN_ORDER = [
   'crisis-deforest-1', 'crisis-fire-1', 'crisis-heat-1', 'crisis-sea-1',
   'crisis-displacement-1', 'crisis-cyclone-1', 'crisis-volcano-1',
   'crisis-earthquake-1', 'crisis-pollution-1', 'crisis-biodiversity-1', 'crisis-pandemic-1',
+  'crisis-energy-blackout-1', 'crisis-ocean-acidification-1', 'crisis-cyber-infrastructure-1', 'crisis-food-logistics-1',
 ] as const;
 
 export const CRISES_DATA: CrisisCard[] = CAMPAIGN_ORDER

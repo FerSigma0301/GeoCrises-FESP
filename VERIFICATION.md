@@ -21,3 +21,7 @@ The initial menu was visually verified with four selectable modes: Campanha, Sur
 ## Menu polish
 
 The initial menu was visually rechecked after the polish pass. It now includes a clearer command-center hierarchy, animated atmospheric accents, a mission briefing panel that reflects the selected mode, risk/time/scale bars, and stronger spacing and contrast around the four mode cards. The menu remains responsive and the existing tutorial and mode-selection flow is preserved.
+
+## Launch transition
+
+The menu-to-command transition was tested through the browser. Clicking Iniciar Campanha changes the button to “Inicializando centro de comando...”, shows the launch overlay with “Estabelecendo enlace planetário”, progress bar, and mode-specific loading text, then opens the command center with the entry animation. A final check also confirmed the campaign order now contains all 19 crises rather than the previous 15-phase residual.

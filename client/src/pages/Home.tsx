@@ -96,6 +96,8 @@ export default function Home() {
   const [gameMode, setGameMode] = useState<GameMode>('campaign');
   const [gameStarted, setGameStarted] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [isLaunching, setIsLaunching] = useState(false);
+  const [commandEntering, setCommandEntering] = useState(false);
   // PDR Initial Resources (Item 7):
   // Finanças: 1000 | População: 100 | Sustentabilidade: 50 | Vidas: 3 | XP: 0
   const buildInitialResources = (mode: GameMode): PlayerResources => ({
@@ -160,9 +162,10 @@ export default function Home() {
   const currentCrisis = crisisDeck[currentCrisisIdx % crisisDeck.length];
 
   const startGame = (mode: GameMode) => {
+    if (isLaunching) return;
     sounds.playClick();
     setGameMode(mode);
-    setGameStarted(true);
+    setIsLaunching(true);
     setResources(buildInitialResources(mode));
     setCurrentCrisisIdx(0);
     setImpacts([]);
@@ -177,6 +180,12 @@ export default function Home() {
     setIsGameOver(false);
     setSpeedrunSeconds(0);
     setActiveModule('decisions');
+    window.setTimeout(() => {
+      setGameStarted(true);
+      setIsLaunching(false);
+      setCommandEntering(true);
+      window.setTimeout(() => setCommandEntering(false), 1100);
+    }, 520);
   };
 
   const openTutorial = () => {
@@ -423,7 +432,7 @@ export default function Home() {
 
   if (!gameStarted) {
     return (
-      <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid">
+      <div className={`min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid ${isLaunching ? 'menu-launching' : ''}`}>
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-10 lg:py-10">
         <div className="menu-pulse pointer-events-none absolute -left-20 top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="menu-float pointer-events-none absolute right-[34%] top-16 hidden h-24 w-24 rounded-full border border-cyan-300/10 bg-cyan-400/5 blur-[1px] lg:block" />
@@ -454,11 +463,13 @@ export default function Home() {
                   return <button key={mode} type="button" onClick={() => setGameMode(mode)} className={`group rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-1 ${selected ? 'border-cyan-400/70 bg-cyan-400/10 shadow-lg shadow-cyan-500/10' : 'border-slate-800 bg-slate-950/60 hover:border-slate-600'}`}><div className="flex items-start justify-between"><span className={`rounded-xl p-2 ${selected ? 'bg-cyan-400/15 text-cyan-200' : 'bg-slate-800/70 text-slate-400'}`}><Icon className="h-5 w-5" /></span>{selected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[9px] font-mono uppercase text-emerald-300">selecionado</span>}</div><p className="mt-4 font-bold text-white">{details.title}</p><p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300/80">{details.subtitle}</p><p className="mt-3 text-xs leading-relaxed text-slate-400">{details.description}</p></button>;
                 })}
               </div>
-              <Button onClick={() => startGame(gameMode)} className="mt-5 h-12 w-full gap-2 bg-gradient-to-r from-cyan-500 to-sky-500 font-bold text-slate-950 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-sky-400"><Crosshair className="h-4 w-4" /> Iniciar {MODE_DETAILS[gameMode].title}</Button>
+              <Button disabled={isLaunching} onClick={() => startGame(gameMode)} className="mt-5 h-12 w-full gap-2 bg-gradient-to-r from-cyan-500 to-sky-500 font-bold text-slate-950 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-sky-400 disabled:opacity-80">{isLaunching ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-950" /> Inicializando centro de comando...</> : <><Crosshair className="h-4 w-4" /> Iniciar {MODE_DETAILS[gameMode].title}</>}</Button>
             </section>
           </main>
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/70 pt-4 text-[10px] font-mono uppercase tracking-wider text-slate-600"><span>Conhecer o mundo é o primeiro passo.</span><span>Dados · ciência · estratégia</span></footer>
         </div>
+
+        {isLaunching && <div className="launch-overlay fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/95"><div className="launch-core text-center"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-cyan-300/60 bg-cyan-400/10 shadow-[0_0_80px_rgba(34,211,238,0.35)]"><span className="h-5 w-5 animate-ping rounded-full bg-cyan-300" /></div><p className="mt-6 text-[10px] font-mono uppercase tracking-[0.35em] text-cyan-300">Estabelecendo enlace planetário</p><div className="mx-auto mt-4 h-1 w-56 overflow-hidden rounded-full bg-slate-800"><div className="launch-progress h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-300" /></div><p className="mt-3 text-xs text-slate-500">Carregando {MODE_DETAILS[gameMode].title} · sincronizando dados territoriais</p></div></div>}
 
         {tutorialOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-cyan-800/60 bg-slate-950 p-6 shadow-2xl shadow-cyan-950/40"><div className="flex items-start justify-between"><div><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Protocolo de iniciação</p><h2 className="mt-1 text-2xl font-bold text-white">Como jogar GeoCrisis</h2></div><button type="button" onClick={() => setTutorialOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-6 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border border-sky-900/60 bg-sky-950/20 p-4"><span className="text-2xl">01</span><p className="mt-3 font-bold text-white">Leia o território</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Use o Mapa para localizar cada crise e entender seus conceitos geográficos.</p></div><div className="rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4"><span className="text-2xl">02</span><p className="mt-3 font-bold text-white">Escolha uma carta</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Compare custo, população, sustentabilidade e XP. Categorias diferentes ativam sinergias.</p></div><div className="rounded-2xl border border-emerald-900/60 bg-emerald-950/20 p-4"><span className="text-2xl">03</span><p className="mt-3 font-bold text-white">Construa recursos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Na Economia, resgate oportunidades, aceite contratos e invista no mercado dinâmico.</p></div><div className="rounded-2xl border border-rose-900/60 bg-rose-950/20 p-4"><span className="text-2xl">04</span><p className="mt-3 font-bold text-white">Aceite os eventos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Crises inesperadas mudam o cenário. Preserve vidas e mantenha o equilíbrio do sistema.</p></div></div><Button onClick={() => setTutorialOpen(false)} className="mt-6 w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400">Entendi, iniciar operação</Button></div></div>}
       </div>
@@ -466,7 +477,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid">
+    <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid ${commandEntering ? 'command-enter' : ''}`}>
       {/* Top Tactical Status Bar (Recursos - PDR Item 7) */}
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-sky-900/60 px-4 py-2.5 shadow-[0_10px_35px_rgba(2,6,23,0.55)]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
