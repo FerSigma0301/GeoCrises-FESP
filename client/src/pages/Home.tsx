@@ -3,7 +3,6 @@ import GlobeCanvas from '@/components/GlobeCanvas';
 import CrisisCardView from '@/components/CrisisCardView';
 import KnowledgeQuizModal from '@/components/KnowledgeQuizModal';
 import EventCardModal from '@/components/EventCardModal';
-import ScienceFairSurveyModal from '@/components/ScienceFairSurveyModal';
 import VictoryReportModal from '@/components/VictoryReportModal';
 import { CRISES_DATA } from '@/game/crisesData';
 import { PlayerResources, DecisionOption, FinalRank, RevenueOpportunity, RiskContract, MarketOffer } from '@/game/types';
@@ -13,8 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   AlertOctagon,
-  BarChart2,
   CheckCircle2,
+  Coins,
+  Crosshair,
   DollarSign,
   FlaskConical,
   Gauge,
@@ -22,6 +22,7 @@ import {
   Heart,
   HelpCircle,
   Leaf,
+  Map as MapIcon,
   RotateCcw,
   Recycle,
   ShieldCheck,
@@ -78,16 +79,13 @@ export default function Home() {
   const [activeContract, setActiveContract] = useState<RiskContract | null>(null);
   const [resolvedContracts, setResolvedContracts] = useState<string[]>([]);
   const [marketPurchases, setMarketPurchases] = useState<string[]>([]);
+  const [activeModule, setActiveModule] = useState<'map' | 'economy' | 'decisions'>('decisions');
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Modals state
   const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(false);
   const [knowledgeCompletedForCurrent, setKnowledgeCompletedForCurrent] = useState(false);
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
-  const [isSurveyOpen, setIsSurveyOpen] = useState(false);
-  const [surveyMode, setSurveyMode] = useState<'pre' | 'post'>('pre');
-  const [preScore, setPreScore] = useState<number>(1);
-  const [postScore, setPostScore] = useState<number>(3);
   const [isGameOver, setIsGameOver] = useState(false);
 
   // AutoPilot / Demo mode query parameter support
@@ -225,9 +223,7 @@ export default function Home() {
 
   const advanceRound = () => {
     if (resources.lives <= 0 || currentCrisisIdx >= CRISES_DATA.length - 1) {
-      // Trigger post survey before game victory screen
-      setSurveyMode('post');
-      setIsSurveyOpen(true);
+      setIsGameOver(true);
     } else {
       setCurrentCrisisIdx((prev) => prev + 1);
       setKnowledgeCompletedForCurrent(false);
@@ -238,17 +234,6 @@ export default function Home() {
   const handleKnowledgeSuccess = () => {
     setResources((prev) => ({ ...prev, xp: prev.xp + 100 }));
     setKnowledgeCompletedForCurrent(true);
-  };
-
-  const handleSurveyComplete = (score: number) => {
-    if (surveyMode === 'pre') {
-      setPreScore(score);
-      setIsSurveyOpen(false);
-    } else {
-      setPostScore(score);
-      setIsSurveyOpen(false);
-      setIsGameOver(true);
-    }
   };
 
   const handleRestartGame = () => {
@@ -347,19 +332,6 @@ export default function Home() {
           {/* Quick Controls */}
           <div className="flex items-center gap-2">
             <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setSurveyMode('pre');
-                setIsSurveyOpen(true);
-              }}
-              className="text-xs text-sky-300 hover:bg-sky-950/50 gap-1.5 border border-sky-900/60"
-            >
-              <BarChart2 className="w-3.5 h-3.5" />
-              Questionário Feira
-            </Button>
-
-            <Button
               size="icon"
               variant="ghost"
               onClick={handleToggleSound}
@@ -371,15 +343,47 @@ export default function Home() {
         </div>
       </header>
 
+      <aside className="fixed bottom-5 left-5 top-24 z-30 hidden w-16 flex-col items-center justify-between rounded-2xl border border-sky-900/60 bg-slate-950/85 py-4 shadow-2xl shadow-slate-950/50 backdrop-blur-xl lg:flex">
+        <div className="flex flex-col items-center gap-3">
+          <span className="mb-2 text-[9px] font-black tracking-[0.25em] text-sky-400 [writing-mode:vertical-rl]">COMMAND</span>
+          {[
+            { id: 'map' as const, label: 'Mapa', icon: MapIcon },
+            { id: 'economy' as const, label: 'Economia', icon: Coins },
+            { id: 'decisions' as const, label: 'Decisões', icon: Crosshair },
+          ].map((item) => {
+            const Icon = item.icon;
+            const active = activeModule === item.id;
+            return <button key={item.id} type="button" onClick={() => setActiveModule(item.id)} title={item.label} className={`group flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-200 ${active ? 'border-cyan-400/60 bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-500 hover:border-slate-700 hover:bg-slate-900 hover:text-slate-200'}`}><Icon className="h-4 w-4 transition-transform group-hover:scale-110" /></button>;
+          })}
+        </div>
+        <span className="text-[9px] font-mono text-slate-600 [writing-mode:vertical-rl]">GEOCRISIS</span>
+      </aside>
+
       {/* Main Command Center Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 lg:pl-28 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <nav className="col-span-full flex gap-2 overflow-x-auto rounded-2xl border border-sky-900/60 bg-slate-950/65 p-2 backdrop-blur-xl lg:hidden">
+          {[
+            { id: 'map' as const, label: 'Mapa', icon: MapIcon, hint: 'Globo e crises' },
+            { id: 'economy' as const, label: 'Economia', icon: Coins, hint: 'Recursos e mercado' },
+            { id: 'decisions' as const, label: 'Decisões', icon: Crosshair, hint: 'Cartas e ciência' },
+          ].map((item) => {
+            const Icon = item.icon;
+            const active = activeModule === item.id;
+            return <button key={item.id} type="button" onClick={() => setActiveModule(item.id)} className={`flex min-w-[125px] flex-1 items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all ${active ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-100' : 'border-transparent text-slate-500 hover:bg-slate-900'}`}><Icon className="h-4 w-4" /><span><strong className="block text-xs">{item.label}</strong><small className="block text-[9px] text-slate-500">{item.hint}</small></span></button>;
+          })}
+        </nav>
+
+        <div className="col-span-full flex items-center justify-between rounded-xl border border-sky-900/40 bg-slate-950/40 px-3 py-2 text-[10px] font-mono text-slate-500">
+          <span className="uppercase tracking-[0.2em] text-sky-300">MÓDULO ATIVO · {activeModule === 'map' ? 'MAPA OPERACIONAL' : activeModule === 'economy' ? 'ECONOMIA DE RESILIÊNCIA' : 'DECISÕES E CIÊNCIA'}</span>
+          <span>FASE {currentCrisisIdx + 1}/{CRISES_DATA.length}</span>
+        </div>
         {/* Left Side: 3D Globe & Spatial Information */}
-        <section className="lg:col-span-5 flex flex-col gap-4">
-          <div className="h-[440px] w-full">
+        <section className={`${activeModule === 'decisions' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4`}>
+          <div className={`${activeModule !== 'map' ? 'hidden' : ''} h-[440px] w-full`}>
             <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
           </div>
 
-          <div className="glass-panel rounded-2xl border border-cyan-900/60 p-4">
+          <div className={`${activeModule !== 'map' ? 'hidden' : ''} glass-panel rounded-2xl border border-cyan-900/60 p-4`}>
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300"><Gauge className="h-3.5 w-3.5" /> Operação em curso</div>
@@ -396,7 +400,7 @@ export default function Home() {
             </div>
           </div>
 
-          <details open className="group rounded-2xl border border-amber-900/50 bg-slate-950/30 p-3 shadow-inner shadow-amber-950/10">
+          <details open className={`${activeModule !== 'economy' ? 'hidden' : ''} group rounded-2xl border border-amber-900/50 bg-slate-950/30 p-3 shadow-inner shadow-amber-950/10`}>
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-1 py-1 marker:hidden">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300"><DollarSign className="h-3.5 w-3.5" /> Finanças & estratégia</div>
@@ -507,7 +511,7 @@ export default function Home() {
             </div>
           </details>
 
-          <details open className="group rounded-2xl border border-sky-900/50 bg-slate-950/30 p-3">
+          <details open className={`${activeModule !== 'map' ? 'hidden' : ''} group rounded-2xl border border-sky-900/50 bg-slate-950/30 p-3`}>
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-1 py-1 marker:hidden">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-sky-300"><Gauge className="h-3.5 w-3.5" /> Navegação da campanha</div>
@@ -577,7 +581,7 @@ export default function Home() {
         </section>
 
         {/* Right Side: Active Crisis, Real Science Data, Decision Cards */}
-        <section className="lg:col-span-7">
+        <section className={`${activeModule === 'decisions' ? 'lg:col-span-12' : 'hidden'}`}>
           <CrisisCardView
             crisis={currentCrisis}
             resources={resources}
@@ -609,20 +613,11 @@ export default function Home() {
         />
       )}
 
-      <ScienceFairSurveyModal
-        isOpen={isSurveyOpen}
-        mode={surveyMode}
-        onComplete={handleSurveyComplete}
-        preScore={preScore}
-      />
-
       <VictoryReportModal
         isOpen={isGameOver}
         resources={resources}
         totalScore={Math.round(totalScore)}
         rank={finalRank}
-        preScore={preScore}
-        postScore={postScore}
         onRestart={handleRestartGame}
       />
     </div>

@@ -89,10 +89,3 @@ export interface CrisisCard {
 }
 
 export type FinalRank = 'Líder Global 🌎' | 'Gestor Expert 🥇' | 'Gestor em Desenvolvimento 🥈' | 'Gestor Iniciante 🥉';
-
-export interface SurveyAnswer {
-  preScore: number;
-  postScore: number;
-  preAnswers: Record<string, string>;
-  postAnswers: Record<string, string>;
-}
