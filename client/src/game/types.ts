@@ -56,7 +56,7 @@ export interface MarketOffer {
 export interface CrisisCard {
   id: string;
   name: string;
-  category: 'flood' | 'drought' | 'wildfire' | 'heatwave' | 'deforestation' | 'sealevel' | 'earthquake' | 'pollution' | 'pandemic' | 'biodiversity';
+  category: 'flood' | 'drought' | 'wildfire' | 'heatwave' | 'deforestation' | 'sealevel' | 'earthquake' | 'pollution' | 'pandemic' | 'biodiversity' | 'energy' | 'ocean' | 'cyber' | 'food';
   location: string;
   coordinates: { lat: number; lng: number };
   image: string;

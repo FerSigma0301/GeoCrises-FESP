@@ -13,3 +13,7 @@ The decision cards now show rarity labels, hover lift, and compact impact compar
 ## Campaign order, rewards, cards, and hologram
 
 The campaign now visibly begins with Seca Severa and Colapso Hídrico, followed by the agricultural crisis, flood, landslide, deforestation, wildfire, heatwave, sea-level, displacement, cyclone, volcano, earthquake, pollution, biodiversity, and pandemic. The Economy module visibly includes Seguro Paramétrico Climático, Licença de Dados Abertos, the All-in risk contract, and two new market offers. Cards show rarity badges and impact bars. The Earth scene now includes an animated wireframe hologram, latitude bands, atmosphere pulse, scan sweep, and a safe fallback overlay when WebGL is unavailable in the preview environment.
+
+## Menu, tutorial, modes, and expanded crises
+
+The initial menu was visually verified with four selectable modes: Campanha, Survival, Sandbox, and Speedrun. The tutorial modal was opened and displayed four onboarding steps covering map reading, card choice, economy, and unexpected events. Survival was selected and started successfully; the interface showed the Survival badge, RODADA 1, and the reversed high-pressure crisis deck beginning with the pandemic crisis. The catalog now contains 19 ordered crisis entries, including energy, ocean, cyber infrastructure, and food logistics categories.

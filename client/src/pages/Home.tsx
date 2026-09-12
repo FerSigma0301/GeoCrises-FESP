@@ -13,15 +13,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   AlertOctagon,
+  BookOpen,
   CheckCircle2,
   Coins,
   Crosshair,
   DollarSign,
   FlaskConical,
+  Gamepad2,
   Gauge,
   HandCoins,
   Heart,
   HelpCircle,
+  Infinity as InfinityIcon,
   Leaf,
   Map as MapIcon,
   RotateCcw,
@@ -29,6 +32,7 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  Timer,
   X,
   Users,
   Volume2,
@@ -77,17 +81,32 @@ type ActionFeedback = {
   synergy?: string;
 };
 
+type GameMode = 'campaign' | 'survival' | 'sandbox' | 'speedrun';
+
+const MODE_DETAILS: Record<GameMode, { title: string; subtitle: string; description: string; icon: typeof Crosshair; accent: string }> = {
+  campaign: { title: 'Campanha', subtitle: '19 crises · progressão guiada', description: 'A sequência completa de crises, com economia, contratos e consequências persistentes.', icon: Crosshair, accent: 'cyan' },
+  survival: { title: 'Survival', subtitle: 'infinito · dificuldade crescente', description: 'Sobreviva enquanto novas rodadas aumentam a pressão e os eventos ficam mais severos.', icon: InfinityIcon, accent: 'rose' },
+  sandbox: { title: 'Sandbox', subtitle: 'recursos livres · teste estratégias', description: 'Experimente decisões, cartas e investimentos com recursos amplificados e sem fim de campanha.', icon: Gamepad2, accent: 'emerald' },
+  speedrun: { title: 'Speedrun', subtitle: '10 crises · tempo mínimo', description: 'Resolva um circuito curto e intenso. Cada decisão conta para o seu tempo final.', icon: Timer, accent: 'amber' },
+};
+
+const getCrisisDeck = (mode: GameMode) => mode === 'speedrun' ? CRISES_DATA.slice(0, 10) : mode === 'survival' ? [...CRISES_DATA].reverse() : CRISES_DATA;
+
 export default function Home() {
+  const [gameMode, setGameMode] = useState<GameMode>('campaign');
+  const [gameStarted, setGameStarted] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   // PDR Initial Resources (Item 7):
   // Finanças: 1000 | População: 100 | Sustentabilidade: 50 | Vidas: 3 | XP: 0
-  const initialResources: PlayerResources = {
-    finance: 1000,
-    populationProtected: 100,
-    sustainability: 50,
-    lives: 3,
+  const buildInitialResources = (mode: GameMode): PlayerResources => ({
+    finance: mode === 'sandbox' ? 100000 : 1000,
+    populationProtected: mode === 'sandbox' ? 1000 : 100,
+    sustainability: mode === 'sandbox' ? 100 : 50,
+    lives: mode === 'sandbox' ? 99 : 3,
     xp: 0,
     round: 1
-  };
+  });
+  const initialResources = buildInitialResources(gameMode);
 
   const [resources, setResources] = useState<PlayerResources>(initialResources);
   const [currentCrisisIdx, setCurrentCrisisIdx] = useState<number>(0);
@@ -115,11 +134,19 @@ export default function Home() {
   const [knowledgeCompletedForCurrent, setKnowledgeCompletedForCurrent] = useState(false);
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [speedrunSeconds, setSpeedrunSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!gameStarted || gameMode !== 'speedrun' || isGameOver) return;
+    const timer = window.setInterval(() => setSpeedrunSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [gameStarted, gameMode, isGameOver]);
 
   // AutoPilot / Demo mode query parameter support
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('demo') === '1' || params.get('demo') === 'true') {
+      setGameStarted(true);
       const demoTimer = setTimeout(() => {
         // Automatically make a balanced decision in demo mode
         const firstOpt = CRISES_DATA[0].options[0];
@@ -129,7 +156,33 @@ export default function Home() {
     }
   }, []);
 
-  const currentCrisis = CRISES_DATA[currentCrisisIdx];
+  const crisisDeck = getCrisisDeck(gameMode);
+  const currentCrisis = crisisDeck[currentCrisisIdx % crisisDeck.length];
+
+  const startGame = (mode: GameMode) => {
+    sounds.playClick();
+    setGameMode(mode);
+    setGameStarted(true);
+    setResources(buildInitialResources(mode));
+    setCurrentCrisisIdx(0);
+    setImpacts([]);
+    setDecisionHistory([]);
+    setClaimedOpportunities([]);
+    setActiveContract(null);
+    setResolvedContracts([]);
+    setMarketPurchases([]);
+    setFinanceHistory([{ round: 1, finance: mode === 'sandbox' ? 100000 : 1000, delta: 0, label: 'Base' }]);
+    setActionFeedback(null);
+    setLastDecisionCategory(null);
+    setIsGameOver(false);
+    setSpeedrunSeconds(0);
+    setActiveModule('decisions');
+  };
+
+  const openTutorial = () => {
+    sounds.playClick();
+    setTutorialOpen(true);
+  };
 
   const switchModule = (module: 'map' | 'economy' | 'decisions') => {
     if (module === activeModule) return;
@@ -220,7 +273,8 @@ export default function Home() {
     const synergyActive = Boolean(lastDecisionCategory && lastDecisionCategory !== option.category);
     const synergyBonus = synergyActive ? 45 : 0;
     const synergyPopulation = synergyActive ? 35 : 0;
-    const newFinance = Math.max(0, resources.finance - option.costFinance);
+    const survivalPressure = gameMode === 'survival' ? Math.min(220, Math.floor(resources.round / 3) * 10) : 0;
+    const newFinance = Math.max(0, resources.finance - option.costFinance - survivalPressure);
     const newPop = resources.populationProtected + option.deltaPopulation + synergyPopulation;
     const newSust = Math.max(0, resources.sustainability + option.deltaSustainability + (synergyActive ? 8 : 0));
     const newXP = resources.xp + option.deltaXP;
@@ -238,7 +292,7 @@ export default function Home() {
     const feedback: ActionFeedback = {
       title: synergyActive ? 'Sinergia ativada' : 'Decisão executada',
       detail: synergyActive ? 'A combinação de frentes diferentes criou uma resposta multissetorial mais eficiente.' : 'A operação foi aplicada ao território e seus efeitos já aparecem no painel.',
-      finance: -option.costFinance,
+      finance: -(option.costFinance + survivalPressure),
       population: option.deltaPopulation + synergyPopulation,
       sustainability: option.deltaSustainability + (synergyActive ? 8 : 0),
       lives: 0,
@@ -263,7 +317,7 @@ export default function Home() {
     ]);
 
     // Check unexpected event (Carta de Evento - PDR item 8)
-    const shouldTriggerEvent = Math.random() < 0.65;
+    const shouldTriggerEvent = Math.random() < Math.min(0.9, 0.65 + (gameMode === 'survival' ? resources.round * 0.01 : 0));
     if (shouldTriggerEvent && currentCrisis.unexpectedEvent) {
       sounds.playAlarm();
       setActiveEvent(currentCrisis.unexpectedEvent);
@@ -304,7 +358,13 @@ export default function Home() {
   };
 
   const advanceRound = () => {
-    if (resources.lives <= 0 || currentCrisisIdx >= CRISES_DATA.length - 1) {
+    if (resources.lives <= 0) {
+      setIsGameOver(true);
+    } else if (gameMode === 'survival') {
+      setCurrentCrisisIdx((prev) => (prev + 1) % crisisDeck.length);
+      setKnowledgeCompletedForCurrent(false);
+      setResources((prev) => ({ ...prev, round: prev.round + 1 }));
+    } else if (currentCrisisIdx >= crisisDeck.length - 1) {
       setIsGameOver(true);
     } else {
       setCurrentCrisisIdx((prev) => prev + 1);
@@ -332,7 +392,14 @@ export default function Home() {
     setResolvedContracts([]);
     setMarketPurchases([]);
     setIsGameOver(false);
+    setSpeedrunSeconds(0);
     sounds.playClick();
+  };
+
+  const returnToMenu = () => {
+    sounds.playClick();
+    setGameStarted(false);
+    setIsGameOver(false);
   };
 
   // Calculate Total Score (Item 10 and 11 do PDR)
@@ -353,6 +420,47 @@ export default function Home() {
     const y = 112 - ((point.finance - chartMin) / chartRange) * 92;
     return `${x},${y}`;
   }).join(' ');
+
+  if (!gameStarted) {
+    return (
+      <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid">
+        <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-10 lg:py-10">
+          <header className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 via-cyan-400 to-emerald-400 text-xl shadow-lg shadow-cyan-500/25">🌍</span>
+              <div><p className="text-lg font-black tracking-tight text-white">GeoCrisis</p><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Centro de comando planetário</p></div>
+            </div>
+            <button type="button" onClick={openTutorial} className="flex items-center gap-2 rounded-xl border border-sky-800/70 bg-slate-950/60 px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/70 hover:text-white"><BookOpen className="h-4 w-4 text-cyan-300" /> Como jogar</button>
+          </header>
+
+          <main className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="max-w-xl">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-200"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" /> Simulação online · Terra em estado crítico</div>
+              <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.04em] text-white sm:text-7xl">Decida o futuro.<br /><span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-emerald-300 bg-clip-text text-transparent">Proteja o mundo.</span></h1>
+              <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-400">Você lidera uma central de resposta global. Equilibre economia, população e sustentabilidade enquanto crises reais se encadeiam no mapa.</p>
+              <div className="mt-8 grid grid-cols-3 gap-2 text-center text-[10px] font-mono uppercase tracking-wider text-slate-500"><div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><strong className="block text-lg text-cyan-300">19</strong>crises</div><div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><strong className="block text-lg text-amber-300">4</strong>modos</div><div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3"><strong className="block text-lg text-emerald-300">∞</strong>estratégias</div></div>
+            </section>
+
+            <section className="glass-panel rounded-3xl border border-sky-900/60 p-4 shadow-2xl shadow-cyan-950/20 sm:p-6">
+              <div className="mb-5 flex items-end justify-between"><div><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Selecione a operação</p><h2 className="mt-1 text-xl font-bold text-white">Escolha seu modo de jogo</h2></div><span className="text-[10px] font-mono text-slate-600">v2.4 / COMMAND</span></div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(Object.keys(MODE_DETAILS) as GameMode[]).map((mode) => {
+                  const details = MODE_DETAILS[mode];
+                  const Icon = details.icon;
+                  const selected = gameMode === mode;
+                  return <button key={mode} type="button" onClick={() => setGameMode(mode)} className={`group rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-1 ${selected ? 'border-cyan-400/70 bg-cyan-400/10 shadow-lg shadow-cyan-500/10' : 'border-slate-800 bg-slate-950/60 hover:border-slate-600'}`}><div className="flex items-start justify-between"><span className={`rounded-xl p-2 ${selected ? 'bg-cyan-400/15 text-cyan-200' : 'bg-slate-800/70 text-slate-400'}`}><Icon className="h-5 w-5" /></span>{selected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[9px] font-mono uppercase text-emerald-300">selecionado</span>}</div><p className="mt-4 font-bold text-white">{details.title}</p><p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300/80">{details.subtitle}</p><p className="mt-3 text-xs leading-relaxed text-slate-400">{details.description}</p></button>;
+                })}
+              </div>
+              <Button onClick={() => startGame(gameMode)} className="mt-5 h-12 w-full gap-2 bg-gradient-to-r from-cyan-500 to-sky-500 font-bold text-slate-950 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-sky-400"><Crosshair className="h-4 w-4" /> Iniciar {MODE_DETAILS[gameMode].title}</Button>
+            </section>
+          </main>
+          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/70 pt-4 text-[10px] font-mono uppercase tracking-wider text-slate-600"><span>Conhecer o mundo é o primeiro passo.</span><span>Dados · ciência · estratégia</span></footer>
+        </div>
+
+        {tutorialOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-cyan-800/60 bg-slate-950 p-6 shadow-2xl shadow-cyan-950/40"><div className="flex items-start justify-between"><div><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Protocolo de iniciação</p><h2 className="mt-1 text-2xl font-bold text-white">Como jogar GeoCrisis</h2></div><button type="button" onClick={() => setTutorialOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-6 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border border-sky-900/60 bg-sky-950/20 p-4"><span className="text-2xl">01</span><p className="mt-3 font-bold text-white">Leia o território</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Use o Mapa para localizar cada crise e entender seus conceitos geográficos.</p></div><div className="rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4"><span className="text-2xl">02</span><p className="mt-3 font-bold text-white">Escolha uma carta</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Compare custo, população, sustentabilidade e XP. Categorias diferentes ativam sinergias.</p></div><div className="rounded-2xl border border-emerald-900/60 bg-emerald-950/20 p-4"><span className="text-2xl">03</span><p className="mt-3 font-bold text-white">Construa recursos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Na Economia, resgate oportunidades, aceite contratos e invista no mercado dinâmico.</p></div><div className="rounded-2xl border border-rose-900/60 bg-rose-950/20 p-4"><span className="text-2xl">04</span><p className="mt-3 font-bold text-white">Aceite os eventos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Crises inesperadas mudam o cenário. Preserve vidas e mantenha o equilíbrio do sistema.</p></div></div><Button onClick={() => setTutorialOpen(false)} className="mt-6 w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400">Entendi, iniciar operação</Button></div></div>}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid">
@@ -428,6 +536,17 @@ export default function Home() {
 
           {/* Quick Controls */}
           <div className="flex items-center gap-2">
+            <span className="hidden rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2 py-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 sm:inline-flex">{MODE_DETAILS[gameMode].title}</span>
+            {gameMode === 'speedrun' && <span className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-mono text-amber-200">{String(Math.floor(speedrunSeconds / 60)).padStart(2, '0')}:{String(speedrunSeconds % 60).padStart(2, '0')}</span>}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={returnToMenu}
+              title="Voltar ao menu"
+              className="h-8 w-8 text-slate-400 hover:text-white"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
             <Button
               size="icon"
               variant="ghost"
@@ -472,7 +591,7 @@ export default function Home() {
 
         <div className="col-span-full flex items-center justify-between rounded-xl border border-sky-900/40 bg-slate-950/40 px-3 py-2 text-[10px] font-mono text-slate-500">
           <span className="uppercase tracking-[0.2em] text-sky-300">MÓDULO ATIVO · {activeModule === 'map' ? 'MAPA OPERACIONAL' : activeModule === 'economy' ? 'ECONOMIA DE RESILIÊNCIA' : 'DECISÕES E CIÊNCIA'}</span>
-          <span>FASE {currentCrisisIdx + 1}/{CRISES_DATA.length}</span>
+          <span>{gameMode === 'survival' ? `RODADA ${resources.round}` : `FASE ${currentCrisisIdx + 1}/${crisisDeck.length}`}</span>
         </div>
         {/* Left Side: 3D Globe & Spatial Information */}
         <section key={`module-left-${moduleTransition}`} className={`${activeModule === 'decisions' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
@@ -486,10 +605,10 @@ export default function Home() {
                 <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300"><Gauge className="h-3.5 w-3.5" /> Operação em curso</div>
                 <p className="mt-1 text-sm font-semibold text-white">Responda à crise com estratégia</p>
               </div>
-              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-mono text-cyan-200">FASE {currentCrisisIdx + 1}/{CRISES_DATA.length}</span>
+              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-mono text-cyan-200">{gameMode === 'survival' ? `RODADA ${resources.round}` : `FASE ${currentCrisisIdx + 1}/${crisisDeck.length}`}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
-              <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 transition-all duration-700" style={{ width: `${((currentCrisisIdx + 1) / CRISES_DATA.length) * 100}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 transition-all duration-700" style={{ width: `${gameMode === 'survival' ? Math.min(100, ((resources.round % 10) / 10) * 100) : ((currentCrisisIdx + 1) / crisisDeck.length) * 100}%` }} />
             </div>
             <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-mono">
               <span>{decisionHistory.length} decisões registradas</span>
@@ -647,7 +766,7 @@ export default function Home() {
           <div className="glass-panel border border-sky-900/40 rounded-2xl p-4 text-xs font-mono">
             <div className="flex items-center justify-between mb-3 text-slate-300">
               <span className="font-bold uppercase tracking-wider text-sky-400">
-                CRISES GLOBAIS CATALOGADAS ({currentCrisisIdx + 1}/{CRISES_DATA.length})
+                CRISES GLOBAIS CATALOGADAS ({gameMode === 'survival' ? `${resources.round}ª rodada` : `${currentCrisisIdx + 1}/${crisisDeck.length}`})
               </span>
               <span className="text-slate-400">Rodada {resources.round}</span>
             </div>
