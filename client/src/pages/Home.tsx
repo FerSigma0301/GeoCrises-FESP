@@ -277,7 +277,7 @@ export default function Home() {
         {/* Left Side: 3D Globe & Spatial Information */}
         <section className="lg:col-span-5 flex flex-col gap-4">
           <div className="h-[380px] w-full">
-            <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
+            <GlobeCanvas activeCrisisId={currentCrisis.id} activeCrisis={currentCrisis} impacts={impacts} />
           </div>
 
           {/* Crisis Pipeline & Map Legend */}
