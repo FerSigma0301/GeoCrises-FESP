@@ -75,8 +75,37 @@ const MARKET_OFFERS: MarketOffer[] = [
   { id: 'resilient-housing', title: 'Habitação Adaptada', sector: 'CIDADES', basePrice: 260, volatility: 55, returnRate: 1.88, deltaSustainability: 16 },
 ];
 
-const getMarketPrice = (offer: MarketOffer, round: number, index: number) =>
-  Math.max(60, Math.round(offer.basePrice + Math.sin(round * 1.7 + index * 1.9) * offer.volatility));
+type MarketEvent = {
+  id: string;
+  title: string;
+  description: string;
+  sector: string;
+  priceFactor: number;
+  returnDelta: number;
+  volatilityDelta: number;
+  tone: 'emerald' | 'amber' | 'rose' | 'cyan' | 'violet';
+};
+
+const MARKET_EVENTS: MarketEvent[] = [
+  { id: 'green-stimulus', title: 'Incentivo à Transição Verde', description: 'Fundos públicos aceleram a procura por soluções energéticas de baixo carbono.', sector: 'ENERGIA', priceFactor: 0.78, returnDelta: 0.22, volatilityDelta: 8, tone: 'emerald' },
+  { id: 'water-scarcity', title: 'Alerta de Escassez Hídrica', description: 'Reservatórios em baixa aumentam a disputa por tecnologia de segurança hídrica.', sector: 'ÁGUA', priceFactor: 1.34, returnDelta: 0.3, volatilityDelta: 14, tone: 'amber' },
+  { id: 'food-export-ban', title: 'Restrição às Exportações de Alimentos', description: 'Uma onda de protecionismo pressiona cadeias alimentares e ativos de resiliência agrícola.', sector: 'ALIMENTOS', priceFactor: 1.26, returnDelta: 0.18, volatilityDelta: 12, tone: 'rose' },
+  { id: 'open-data-treaty', title: 'Tratado de Dados Abertos', description: 'Governos compartilham sinais territoriais e reduzem o risco de ativos baseados em dados.', sector: 'DADOS', priceFactor: 0.7, returnDelta: 0.26, volatilityDelta: -6, tone: 'cyan' },
+  { id: 'climate-summit', title: 'Cúpula Climática Extraordinária', description: 'Novos compromissos internacionais movimentam todos os setores de adaptação.', sector: 'GLOBAL', priceFactor: 1.12, returnDelta: 0.14, volatilityDelta: 10, tone: 'violet' },
+  { id: 'market-correction', title: 'Correção Especulativa Global', description: 'Investidores reduzem exposição ao risco; preços caem, mas os retornos potenciais ficam mais apertados.', sector: 'GLOBAL', priceFactor: 0.84, returnDelta: -0.12, volatilityDelta: 18, tone: 'rose' },
+];
+
+const getMarketEventEffect = (offer: MarketOffer, event: MarketEvent) => event.sector === 'GLOBAL' || offer.sector === event.sector;
+const getMarketPrice = (offer: MarketOffer, round: number, index: number, event: MarketEvent) => {
+  const affected = getMarketEventEffect(offer, event);
+  const eventPrice = affected ? offer.basePrice * (event.priceFactor - 1) : 0;
+  return Math.max(60, Math.round(offer.basePrice + Math.sin(round * 1.7 + index * 1.9) * (offer.volatility + (affected ? event.volatilityDelta : 0)) + eventPrice));
+};
+const getMarketReturnRate = (offer: MarketOffer, event: MarketEvent) => offer.returnRate + (getMarketEventEffect(offer, event) ? event.returnDelta : 0);
+const pickMarketEvent = (avoidId?: string) => {
+  const pool = avoidId ? MARKET_EVENTS.filter((event) => event.id !== avoidId) : MARKET_EVENTS;
+  return pool[Math.floor(Math.random() * pool.length)];
+};
 
 type ActionFeedback = {
   title: string;
@@ -127,6 +156,7 @@ export default function Home() {
   const [activeContract, setActiveContract] = useState<RiskContract | null>(null);
   const [resolvedContracts, setResolvedContracts] = useState<string[]>([]);
   const [marketPurchases, setMarketPurchases] = useState<string[]>([]);
+  const [marketEvent, setMarketEvent] = useState<MarketEvent>(() => pickMarketEvent());
   const [activeModule, setActiveModule] = useState<'map' | 'economy' | 'decisions'>(() => {
     if (typeof window === 'undefined') return 'decisions';
     const stored = window.localStorage.getItem('geocrisis:last-module');
@@ -183,6 +213,7 @@ export default function Home() {
     setActiveContract(null);
     setResolvedContracts([]);
     setMarketPurchases([]);
+    setMarketEvent(pickMarketEvent());
     setFinanceHistory([{ round: 1, finance: mode === 'sandbox' ? 100000 : 1000, delta: 0, label: 'Base' }]);
     setActionFeedback(null);
     setLastDecisionCategory(null);
@@ -260,7 +291,7 @@ export default function Home() {
       sounds.playWarning();
       return;
     }
-    const payout = Math.round(price * offer.returnRate);
+    const payout = Math.round(price * getMarketReturnRate(offer, marketEvent));
     sounds.playSuccess();
     setMarketPurchases((prev) => [...prev, purchaseKey]);
     recordFinance(resources.finance - price + payout, offer.title);
@@ -379,12 +410,14 @@ export default function Home() {
     if (resources.lives <= 0) {
       setIsGameOver(true);
     } else if (gameMode === 'survival') {
+      setMarketEvent(pickMarketEvent(marketEvent.id));
       setCurrentCrisisIdx((prev) => (prev + 1) % crisisDeck.length);
       setKnowledgeCompletedForCurrent(false);
       setResources((prev) => ({ ...prev, round: prev.round + 1 }));
     } else if (currentCrisisIdx >= crisisDeck.length - 1) {
       setIsGameOver(true);
     } else {
+      setMarketEvent(pickMarketEvent(marketEvent.id));
       setCurrentCrisisIdx((prev) => prev + 1);
       setKnowledgeCompletedForCurrent(false);
       setResources((prev) => ({ ...prev, round: prev.round + 1 }));
@@ -409,6 +442,7 @@ export default function Home() {
     setActiveContract(null);
     setResolvedContracts([]);
     setMarketPurchases([]);
+    setMarketEvent(pickMarketEvent());
     setIsGameOver(false);
     setSpeedrunSeconds(0);
     sounds.playClick();
@@ -438,6 +472,13 @@ export default function Home() {
     const y = 112 - ((point.finance - chartMin) / chartRange) * 92;
     return `${x},${y}`;
   }).join(' ');
+  const marketEventTone = {
+    emerald: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
+    amber: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
+    rose: 'border-rose-400/30 bg-rose-400/10 text-rose-200',
+    cyan: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-200',
+    violet: 'border-violet-400/30 bg-violet-400/10 text-violet-200',
+  }[marketEvent.tone];
 
   if (!gameStarted) {
     return (
@@ -763,12 +804,19 @@ export default function Home() {
               </div>
               <span className="rounded-full border border-violet-400/25 bg-violet-400/10 px-2 py-1 text-[9px] font-mono text-violet-200">RODADA {resources.round}</span>
             </div>
+            <div className={`mb-3 rounded-xl border p-3 ${marketEventTone}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2"><span className="mt-0.5 text-sm">◈</span><div><p className="text-[9px] font-mono uppercase tracking-[0.18em] opacity-80">Evento da rodada · {marketEvent.sector}</p><p className="mt-1 text-xs font-bold">{marketEvent.title}</p><p className="mt-1 text-[10px] leading-relaxed opacity-75">{marketEvent.description}</p></div></div>
+                <span className="shrink-0 rounded-lg border border-current/20 bg-slate-950/20 px-2 py-1 text-[9px] font-mono">{marketEvent.priceFactor < 1 ? 'PREÇOS ↓' : marketEvent.priceFactor > 1 ? 'PREÇOS ↑' : 'MERCADO'}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-current/15 pt-2 text-[9px] font-mono opacity-80"><span>Retorno afetado: {marketEvent.returnDelta >= 0 ? '+' : ''}{Math.round(marketEvent.returnDelta * 100)}%</span><span>Volatilidade: {marketEvent.volatilityDelta >= 0 ? '+' : ''}{marketEvent.volatilityDelta}</span></div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {MARKET_OFFERS.map((offer, index) => {
-                const price = getMarketPrice(offer, resources.round, index);
+                const price = getMarketPrice(offer, resources.round, index, marketEvent);
                 const purchaseKey = `${resources.round}-${offer.id}`;
                 const bought = marketPurchases.includes(purchaseKey);
-                const profit = Math.round(price * (offer.returnRate - 1));
+                const profit = Math.round(price * (getMarketReturnRate(offer, marketEvent) - 1));
                 const canBuy = resources.finance >= price && !bought;
                 return (
                   <button key={offer.id} type="button" disabled={bought} onClick={() => handleMarketBuy(offer, price)} className={`rounded-xl border p-3 text-left transition-all duration-300 ${bought ? 'border-emerald-500/25 bg-emerald-950/15 opacity-65' : canBuy ? 'border-slate-800 bg-slate-950/55 hover:-translate-y-0.5 hover:border-violet-500/60' : 'border-slate-800/70 bg-slate-950/35 opacity-55'}`}>
