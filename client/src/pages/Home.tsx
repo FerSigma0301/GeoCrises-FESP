@@ -55,6 +55,7 @@ const CREATORS = [
   { name: 'Fernando', role: 'Conceito & Direção', initials: 'FE', tone: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300' },
   { name: 'Tales', role: 'Gameplay & Estratégia', initials: 'TA', tone: 'border-sky-400/30 bg-sky-400/10 text-sky-300' },
   { name: 'Viktor', role: 'Tecnologia & Simulação', initials: 'VI', tone: 'border-violet-400/30 bg-violet-400/10 text-violet-300' },
+  { name: 'Luis Morato', role: 'Pesquisa & Geografia', initials: 'LM', tone: 'border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-300' },
   { name: 'Antônio', role: 'Pesquisa & Geografia', initials: 'AN', tone: 'border-amber-400/30 bg-amber-400/10 text-amber-300' },
   { name: 'Gabriel', role: 'Interface & Experiência', initials: 'GA', tone: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' },
 ];
