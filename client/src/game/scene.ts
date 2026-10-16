@@ -25,6 +25,22 @@ export interface GameHandle {
 }
 
 const EARTH_TEXTURE = "/manus-storage/earth_blue_marble_nasa_3368a8fe.jpg";
+const CRISIS_COLORS: Record<string, Color3> = {
+  flood: new Color3(0.05, 0.65, 1),
+  drought: new Color3(1, 0.72, 0.04),
+  wildfire: new Color3(1, 0.18, 0.03),
+  heatwave: new Color3(1, 0.05, 0.42),
+  deforestation: new Color3(0.05, 1, 0.28),
+  sealevel: new Color3(0.08, 0.95, 0.95),
+  earthquake: new Color3(0.8, 0.65, 0.28),
+  pollution: new Color3(0.7, 0.95, 0.05),
+  pandemic: new Color3(0.72, 0.25, 1),
+  biodiversity: new Color3(0.2, 1, 0.58),
+  energy: new Color3(1, 0.86, 0.05),
+  ocean: new Color3(0.15, 0.35, 1),
+  cyber: new Color3(1, 0.12, 0.86),
+  food: new Color3(1, 0.32, 0.12),
+};
 
 const COLOR_VERTEX_SHADER = `
   precision highp float;
@@ -179,14 +195,15 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
     marker.lookAt(Vector3.Zero());
     marker.rotate(new Vector3(1, 0, 0), -Math.PI / 2);
 
-    const material = createColorMaterial(`crisisBeaconMaterial_${crisis.id}`, scene, new Color3(1, 0.33, 0.08));
+    const crisisColor = CRISIS_COLORS[crisis.category] || new Color3(0.2, 0.85, 1);
+    const material = createColorMaterial(`crisisBeaconMaterial_${crisis.id}`, scene, crisisColor);
     marker.material = material;
 
     const ringMesh = MeshBuilder.CreateTorus(`impactRing_${crisis.id}`, { diameter: 0.52, thickness: 0.028, tessellation: 32 }, scene);
     ringMesh.parent = earth;
     ringMesh.position = position.scale(1.008);
     ringMesh.lookAt(Vector3.Zero());
-    const ringMaterial = createColorMaterial(`impactRingMaterial_${crisis.id}`, scene, new Color3(1, 0.5, 0.08), 0.8);
+    const ringMaterial = createColorMaterial(`impactRingMaterial_${crisis.id}`, scene, crisisColor, 0.88);
     ringMesh.material = ringMaterial;
 
     markerMeshes.set(crisis.id, marker);
@@ -265,9 +282,8 @@ export async function createGameScene(engine: Engine, canvas: HTMLCanvasElement)
       const ringMesh = impactRings.get(impact.crisisId);
       if (!material || !ringMesh) return;
       const positive = impact.balance >= 0;
-      material.setColor3("color", positive ? new Color3(0.1, 1, 0.4) : new Color3(1, 0.16, 0.08));
       const ringMaterial = ringMesh.material as ShaderMaterial;
-      ringMaterial.setColor3("color", positive ? new Color3(0.1, 1, 0.4) : new Color3(1, 0.16, 0.08));
+      ringMaterial.setFloat("alpha", positive ? 1 : 0.62);
       ringMesh.scaling.set(positive ? 1.45 : 1.15, positive ? 1.45 : 1.15, positive ? 1.45 : 1.15);
     });
   };

@@ -3,6 +3,12 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import { createGameScene, type CrisisImpact, type GameHandle } from "@/game/scene";
 import { Satellite } from "lucide-react";
 
+const CRISIS_LEGEND = [
+  ['flood', 'Enchente', '#0da6ff'], ['drought', 'Seca', '#ffb807'], ['wildfire', 'Incêndio', '#ff2e08'], ['heatwave', 'Calor', '#ff0a6b'],
+  ['deforestation', 'Desmatamento', '#0dff47'], ['sealevel', 'Nível do mar', '#14f5f5'], ['earthquake', 'Terremoto', '#cca647'], ['pollution', 'Poluição', '#b3f20d'],
+  ['pandemic', 'Pandemia', '#b83fff'], ['biodiversity', 'Biodiversidade', '#33ff94'], ['energy', 'Energia', '#ffdb0d'], ['ocean', 'Oceano', '#2659ff'], ['cyber', 'Ciber', '#ff1ede'], ['food', 'Alimentos', '#ff521f'],
+] as const;
+
 interface GlobeCanvasProps {
   activeCrisisId: string | null;
   impacts: CrisisImpact[];
@@ -79,6 +85,10 @@ export default function GlobeCanvas({ activeCrisisId, impacts, onSceneReady }: G
       </div>
       <div className="absolute bottom-4 right-4 pointer-events-none bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-sky-500/20 text-[11px] text-slate-400 font-mono">
         Arraste para girar · Scroll para zoom
+      </div>
+      <div className="absolute bottom-4 left-4 max-w-[58%] pointer-events-none rounded-xl border border-slate-700/70 bg-slate-950/80 px-3 py-2 backdrop-blur-md">
+        <div className="mb-1 text-[9px] font-mono uppercase tracking-[0.16em] text-cyan-300">Código cromático das crises</div>
+        <div className="flex flex-wrap gap-x-2.5 gap-y-1">{CRISIS_LEGEND.map(([id, label, color]) => <span key={id} className="flex items-center gap-1 text-[9px] font-mono text-slate-300"><i className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 7px ${color}` }} />{label}</span>)}</div>
       </div>
     </div>
   );
