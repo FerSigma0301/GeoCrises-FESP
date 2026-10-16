@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import GlobeCanvas from '@/components/GlobeCanvas';
+const GlobeCanvas = React.lazy(() => import('@/components/GlobeCanvas'));
 import CrisisCardView from '@/components/CrisisCardView';
 import KnowledgeQuizModal from '@/components/KnowledgeQuizModal';
 import EventCardModal from '@/components/EventCardModal';
 import VictoryReportModal from '@/components/VictoryReportModal';
 import { CRISES_DATA } from '@/game/crisesData';
-import { PlayerResources, DecisionOption, FinalRank, RevenueOpportunity, RiskContract, MarketOffer } from '@/game/types';
+import { PlayerResources, DecisionOption, FinalRank, RevenueOpportunity, RiskContract, MarketOffer, getCardRarity, getRarityEffects } from '@/game/types';
 import type { CrisisImpact } from '@/game/scene';
 import { sounds } from '@/game/soundEffects';
 import { Badge } from '@/components/ui/badge';
@@ -320,33 +320,36 @@ export default function Home() {
   };
 
   const handleSelectDecision = (option: DecisionOption) => {
+    const rarityEffects = getRarityEffects(getCardRarity(option));
     const synergyActive = Boolean(lastDecisionCategory && lastDecisionCategory !== option.category);
     const synergyBonus = synergyActive ? 45 : 0;
     const synergyPopulation = synergyActive ? 35 : 0;
     const survivalPressure = gameMode === 'survival' ? Math.min(220, Math.floor(resources.round / 3) * 10) : 0;
-    const newFinance = Math.max(0, resources.finance - option.costFinance - survivalPressure);
-    const newPop = resources.populationProtected + option.deltaPopulation + synergyPopulation;
-    const newSust = Math.max(0, resources.sustainability + option.deltaSustainability + (synergyActive ? 8 : 0));
-    const newXP = resources.xp + option.deltaXP;
+    const effectiveCost = Math.max(0, option.costFinance - rarityEffects.financeDiscount);
+    const newFinance = Math.max(0, resources.finance - effectiveCost - survivalPressure);
+    const newPop = resources.populationProtected + option.deltaPopulation + synergyPopulation + rarityEffects.populationBonus;
+    const newSust = Math.max(0, resources.sustainability + option.deltaSustainability + (synergyActive ? 8 : 0) + rarityEffects.sustainabilityBonus);
+    const newXP = resources.xp + option.deltaXP + rarityEffects.xpBonus;
 
     setResources((prev) => ({
       ...prev,
       finance: newFinance,
       populationProtected: newPop,
       sustainability: newSust,
-      xp: newXP
+      xp: newXP,
+      lives: Math.max(0, prev.lives + rarityEffects.livesDelta)
     }));
 
-    const balance = option.deltaPopulation + option.deltaSustainability * 2 + option.deltaXP / 2 - option.costFinance / 3 + synergyBonus;
+    const balance = newPop - resources.populationProtected + (newSust - resources.sustainability) * 2 + (newXP - resources.xp) / 2 - effectiveCost / 3 + synergyBonus;
     const result = balance >= 180 ? 'Recuperação forte' : balance >= 90 ? 'Equilíbrio positivo' : 'Resposta de alto custo';
     const feedback: ActionFeedback = {
       title: synergyActive ? 'Sinergia ativada' : 'Decisão executada',
       detail: synergyActive ? 'A combinação de frentes diferentes criou uma resposta multissetorial mais eficiente.' : 'A operação foi aplicada ao território e seus efeitos já aparecem no painel.',
-      finance: -(option.costFinance + survivalPressure),
-      population: option.deltaPopulation + synergyPopulation,
-      sustainability: option.deltaSustainability + (synergyActive ? 8 : 0),
-      lives: 0,
-      xp: option.deltaXP,
+      finance: -(effectiveCost + survivalPressure),
+      population: option.deltaPopulation + synergyPopulation + rarityEffects.populationBonus,
+      sustainability: option.deltaSustainability + (synergyActive ? 8 : 0) + rarityEffects.sustainabilityBonus,
+      lives: rarityEffects.livesDelta,
+      xp: option.deltaXP + rarityEffects.xpBonus,
       synergy: synergyActive ? '+45 equilíbrio · +35 população · +8 sustentabilidade' : undefined,
     };
     setActionFeedback(feedback);
@@ -483,7 +486,7 @@ export default function Home() {
 
   if (!gameStarted) {
     return (
-      <div className={`min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid ${isLaunching ? 'menu-launching' : ''}`}>
+      <div className={`menu-command min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid ${isLaunching ? 'menu-launching' : ''}`}>
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-10 lg:py-10">
         <div className="menu-pulse pointer-events-none absolute -left-20 top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="menu-float pointer-events-none absolute right-[34%] top-16 hidden h-24 w-24 rounded-full border border-cyan-300/10 bg-cyan-400/5 blur-[1px] lg:block" />
@@ -534,7 +537,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid ${commandEntering ? 'command-enter' : ''}`}>
+    <div className={`game-command min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none tactical-grid ${commandEntering ? 'command-enter' : ''}`}>
       {/* Top Tactical Status Bar (Recursos - PDR Item 7) */}
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-sky-900/60 px-4 py-2.5 shadow-[0_10px_35px_rgba(2,6,23,0.55)]">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
@@ -667,7 +670,7 @@ export default function Home() {
         {/* Left Side: 3D Globe & Spatial Information */}
         <section key={`module-left-${moduleTransition}`} className={`${activeModule === 'decisions' ? 'hidden' : 'lg:col-span-12'} flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
           <div className={`${activeModule !== 'map' ? 'hidden' : ''} h-[440px] w-full`}>
-            <GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} />
+            <Suspense fallback={<div className="flex h-full items-center justify-center rounded-2xl border border-cyan-900/50 bg-slate-950/70 text-xs font-mono uppercase tracking-[0.2em] text-cyan-300">Inicializando globo orbital...</div>}><GlobeCanvas activeCrisisId={currentCrisis.id} impacts={impacts} /></Suspense>
           </div>
 
           <div className={`${activeModule !== 'map' ? 'hidden' : ''} glass-panel rounded-2xl border border-cyan-900/60 p-4`}>

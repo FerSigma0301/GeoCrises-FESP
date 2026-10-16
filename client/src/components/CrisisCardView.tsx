@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CrisisCard, DecisionOption, PlayerResources } from '@/game/types';
+import { CrisisCard, DecisionOption, PlayerResources, getCardRarity, getRarityEffects } from '@/game/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, BookOpen, CheckCircle, ExternalLink, ShieldAlert, Sparkles, TrendingUp } from 'lucide-react';
@@ -33,10 +33,20 @@ export default function CrisisCardView({
     nature: { label: 'NATUREZA', color: 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10' },
     emergency: { label: 'EMERGÊNCIA', color: 'text-rose-300 border-rose-400/30 bg-rose-400/10' },
   };
+  const rarityMeta = {
+    comum: { label: 'COMUM', color: 'border-slate-700 bg-slate-800/40 text-slate-400', icon: '·' },
+    raro: { label: 'RARO', color: 'border-cyan-400/60 bg-cyan-400/10 text-cyan-200', icon: '◆' },
+    epico: { label: 'ÉPICO', color: 'border-violet-400/70 bg-violet-400/10 text-violet-200', icon: '✦' },
+    lendario: { label: 'LENDÁRIO', color: 'border-amber-400/80 bg-amber-400/10 text-amber-200', icon: '★' },
+    mitico: { label: 'MÍTICO', color: 'border-fuchsia-400/80 bg-fuchsia-400/10 text-fuchsia-200', icon: '✹' },
+    secreto: { label: 'SECRETO', color: 'border-rose-400/80 bg-rose-400/10 text-rose-200', icon: '⬢' },
+  };
+  const typeMeta: Record<DecisionOption['category'], string> = { infra: 'TECNOLOGIA', prevention: 'PREVENÇÃO', social: 'DIPLOMACIA', nature: 'NATUREZA', emergency: 'RESPOSTA' };
 
   const handleConfirmDecision = () => {
     if (!selectedOption) return;
-    if (resources.finance < selectedOption.costFinance) {
+    const effectiveCost = Math.max(0, selectedOption.costFinance - getRarityEffects(getCardRarity(selectedOption)).financeDiscount);
+    if (resources.finance < effectiveCost) {
       sounds.playWarning();
       return;
     }
@@ -116,6 +126,9 @@ export default function CrisisCardView({
           <img
             src={crisis.image}
             alt={crisis.name}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent pointer-events-none" />
@@ -161,10 +174,11 @@ export default function CrisisCardView({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {crisis.options.map((opt) => {
-            const isAffordable = resources.finance >= opt.costFinance;
+            const isAffordable = resources.finance >= Math.max(0, opt.costFinance - getRarityEffects(getCardRarity(opt)).financeDiscount);
             const isSelected = selectedOption?.id === opt.id;
-            const powerScore = opt.deltaPopulation + opt.deltaSustainability * 3 + opt.deltaXP / 2 - opt.costFinance / 4;
-            const rarity = powerScore >= 360 ? { label: 'ÉPICA', color: 'border-amber-400/70 bg-amber-400/10 text-amber-200' } : powerScore >= 230 ? { label: 'RARA', color: 'border-violet-400/60 bg-violet-400/10 text-violet-200' } : { label: 'COMUM', color: 'border-slate-700 bg-slate-800/40 text-slate-400' };
+            const rarity = getCardRarity(opt);
+            const rarityInfo = rarityMeta[rarity];
+            const rarityEffects = getRarityEffects(rarity);
 
             return (
               <div
@@ -184,7 +198,7 @@ export default function CrisisCardView({
                 }}
                 role="button"
                 tabIndex={isAffordable ? 0 : -1}
-                className={`card-sheen p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1 ${
+                className={`card-sheen p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1 ${rarity === 'lendario' ? 'rarity-legendary' : rarity === 'mitico' || rarity === 'secreto' ? 'rarity-mythic' : ''} ${
                   isSelected
                     ? 'border-sky-400 bg-gradient-to-br from-sky-950/80 to-slate-950/80 shadow-xl shadow-sky-500/20 ring-1 ring-sky-400 -translate-y-1'
                     : isAffordable
@@ -195,9 +209,9 @@ export default function CrisisCardView({
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <div>
-                      <span className={`mb-2 mr-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-wider ${rarity.color}`}>{rarity.label}</span>
+                      <span className={`mb-2 mr-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-wider ${rarityInfo.color}`}>{rarityInfo.icon} {rarityInfo.label}</span>
                       <span className={`mb-2 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-wider ${categoryMeta[opt.category].color}`}>
-                        {categoryMeta[opt.category].label}
+                        {typeMeta[opt.category]}
                       </span>
                       <h4 className="font-bold text-white text-sm leading-snug">{opt.title}</h4>
                     </div>
@@ -210,6 +224,7 @@ export default function CrisisCardView({
                     <span className="h-1.5 flex-1 rounded-full bg-purple-400/80" style={{ opacity: Math.min(1, Math.max(0.2, opt.deltaXP / 200)) }} />
                   </div>
                   <div className="mb-2 flex justify-between text-[9px] font-mono text-slate-600"><span>população</span><span>sustentabilidade</span><span>XP</span></div>
+                  <div className="grid gap-1 text-[9px] font-mono"><span className="text-emerald-300">BUFF · {rarityEffects.buffLabel}</span><span className="text-rose-300">DEBUFF · {rarityEffects.debuffLabel}</span></div>
                 </div>
 
                 <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
@@ -249,7 +264,7 @@ export default function CrisisCardView({
         </div>
 
         <Button
-          disabled={!selectedOption || resources.finance < (selectedOption?.costFinance || 0)}
+          disabled={!selectedOption || resources.finance < Math.max(0, (selectedOption?.costFinance || 0) - (selectedOption ? getRarityEffects(getCardRarity(selectedOption)).financeDiscount : 0))}
           onClick={handleConfirmDecision}
           className="h-11 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-950 font-bold px-6 shadow-lg shadow-sky-600/30 gap-2 transition-transform active:scale-[0.98]"
         >

@@ -7,6 +7,10 @@ export interface PlayerResources {
   round: number; // Rodada atual
 }
 
+export type CardRarity = 'comum' | 'raro' | 'epico' | 'lendario' | 'mitico' | 'secreto';
+
+export type CardType = 'tecnologia' | 'prevencao' | 'diplomacia' | 'natureza' | 'resposta';
+
 export interface DecisionOption {
   id: string;
   title: string;
@@ -18,7 +22,41 @@ export interface DecisionOption {
   deltaXP: number;
   deltaLives?: number;
   scientificFeedback: string;
+  rarity?: CardRarity;
+  cardType?: CardType;
 }
+
+export interface RarityEffects {
+  financeDiscount: number;
+  populationBonus: number;
+  sustainabilityBonus: number;
+  xpBonus: number;
+  livesDelta: number;
+  buffLabel: string;
+  debuffLabel: string;
+}
+
+export const getCardRarity = (option: DecisionOption): CardRarity => {
+  if (option.rarity) return option.rarity;
+  const score = option.deltaPopulation + option.deltaSustainability * 3 + option.deltaXP / 2 - option.costFinance / 4;
+  if (score >= 430) return 'secreto';
+  if (score >= 370) return 'mitico';
+  if (score >= 300) return 'lendario';
+  if (score >= 230) return 'epico';
+  if (score >= 170) return 'raro';
+  return 'comum';
+};
+
+const RARITY_EFFECTS: Record<CardRarity, RarityEffects> = {
+  comum: { financeDiscount: 0, populationBonus: 0, sustainabilityBonus: 0, xpBonus: 0, livesDelta: 0, buffLabel: 'Efeito base', debuffLabel: 'Sem modificadores' },
+  raro: { financeDiscount: 0, populationBonus: 10, sustainabilityBonus: 4, xpBonus: 8, livesDelta: 0, buffLabel: '+10 população · +4 sustentabilidade · +8 XP', debuffLabel: 'Sem penalidade' },
+  epico: { financeDiscount: 10, populationBonus: 18, sustainabilityBonus: 8, xpBonus: 16, livesDelta: 0, buffLabel: '−10 custo · +18 população · +8 sustentabilidade', debuffLabel: 'Sem penalidade' },
+  lendario: { financeDiscount: 20, populationBonus: 28, sustainabilityBonus: 14, xpBonus: 26, livesDelta: -1, buffLabel: '−20 custo · +28 população · +14 sustentabilidade', debuffLabel: '−1 vida: operação de alto risco' },
+  mitico: { financeDiscount: 35, populationBonus: 42, sustainabilityBonus: 22, xpBonus: 42, livesDelta: -1, buffLabel: '−35 custo · +42 população · +22 sustentabilidade', debuffLabel: '−1 vida: pressão extrema' },
+  secreto: { financeDiscount: 55, populationBonus: 65, sustainabilityBonus: 34, xpBonus: 80, livesDelta: -1, buffLabel: '−55 custo · +65 população · +34 sustentabilidade', debuffLabel: '−1 vida: efeito irreversível' },
+};
+
+export const getRarityEffects = (rarity: CardRarity): RarityEffects => RARITY_EFFECTS[rarity];
 
 export interface RevenueOpportunity {
   id: string;
