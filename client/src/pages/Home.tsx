@@ -121,14 +121,15 @@ type ActionFeedback = {
 
 type GameMode = 'campaign' | 'survival' | 'sandbox' | 'speedrun';
 
-const MODE_DETAILS: Record<GameMode, { title: string; subtitle: string; description: string; icon: typeof Crosshair; accent: string }> = {
-  campaign: { title: 'Campanha', subtitle: '19 crises · progressão guiada', description: 'A sequência completa de crises, com economia, contratos e consequências persistentes.', icon: Crosshair, accent: 'cyan' },
-  survival: { title: 'Survival', subtitle: 'infinito · dificuldade crescente', description: 'Sobreviva enquanto novas rodadas aumentam a pressão e os eventos ficam mais severos.', icon: InfinityIcon, accent: 'rose' },
-  sandbox: { title: 'Sandbox', subtitle: 'recursos livres · teste estratégias', description: 'Experimente decisões, cartas e investimentos com recursos amplificados e sem fim de campanha.', icon: Gamepad2, accent: 'emerald' },
-  speedrun: { title: 'Speedrun', subtitle: '10 crises · tempo mínimo', description: 'Resolva um circuito curto e intenso. Cada decisão conta para o seu tempo final.', icon: Timer, accent: 'amber' },
+const MODE_DETAILS: Record<GameMode, { title: string; subtitle: string; description: string; focus: string; icon: typeof Crosshair; accent: string }> = {
+  campaign: { title: 'Campanha', subtitle: '19 crises · progressão guiada', description: 'A sequência completa de crises, com economia, contratos e consequências persistentes.', focus: 'Para aprender e evoluir', icon: Crosshair, accent: 'cyan' },
+  survival: { title: 'Survival', subtitle: 'infinito · dificuldade crescente', description: 'Sobreviva enquanto novas rodadas aumentam a pressão e os eventos ficam mais severos.', focus: 'Para testar resistência', icon: InfinityIcon, accent: 'rose' },
+  sandbox: { title: 'Sandbox', subtitle: 'recursos livres · teste estratégias', description: 'Experimente decisões, cartas e investimentos com recursos amplificados e sem fim de campanha.', focus: 'Para experimentar sem pressão', icon: Gamepad2, accent: 'emerald' },
+  speedrun: { title: 'Speedrun', subtitle: '10 crises · tempo mínimo', description: 'Resolva um circuito curto e intenso. Cada decisão conta para o seu tempo final.', focus: 'Para competir contra o relógio', icon: Timer, accent: 'amber' },
 };
 
-const getCrisisDeck = (mode: GameMode) => mode === 'speedrun' ? CRISES_DATA.slice(0, 10) : mode === 'survival' ? [...CRISES_DATA].reverse() : CRISES_DATA;
+const getCrisisDeck = (mode: GameMode) => mode === 'speedrun' ? CRISES_DATA.slice(0, 10) : CRISES_DATA;
+const shuffleDeck = (deck: typeof CRISES_DATA) => [...deck].sort(() => Math.random() - 0.5);
 
 export default function Home() {
   const [gameMode, setGameMode] = useState<GameMode>('campaign');
@@ -150,6 +151,7 @@ export default function Home() {
   const initialResources = buildInitialResources(gameMode);
 
   const [resources, setResources] = useState<PlayerResources>(initialResources);
+  const [crisisDeck, setCrisisDeck] = useState(() => shuffleDeck(getCrisisDeck('campaign')));
   const [currentCrisisIdx, setCurrentCrisisIdx] = useState<number>(0);
   const [impacts, setImpacts] = useState<CrisisImpact[]>([]);
   const [decisionHistory, setDecisionHistory] = useState<Array<{ crisisId: string; crisisName: string; action: string; balance: number; result: string }>>([]);
@@ -198,13 +200,13 @@ export default function Home() {
     }
   }, []);
 
-  const crisisDeck = getCrisisDeck(gameMode);
   const currentCrisis = crisisDeck[currentCrisisIdx % crisisDeck.length];
 
   const startGame = (mode: GameMode) => {
     if (isLaunching) return;
     sounds.playClick();
     setGameMode(mode);
+    setCrisisDeck(shuffleDeck(getCrisisDeck(mode)));
     setIsLaunching(true);
     setResources(buildInitialResources(mode));
     setCurrentCrisisIdx(0);
@@ -434,6 +436,7 @@ export default function Home() {
   };
 
   const handleRestartGame = () => {
+    setCrisisDeck(shuffleDeck(getCrisisDeck(gameMode)));
     setResources(initialResources);
     setCurrentCrisisIdx(0);
     setKnowledgeCompletedForCurrent(false);
@@ -486,7 +489,7 @@ export default function Home() {
 
   if (!gameStarted) {
     return (
-      <div className={`menu-command min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid ${isLaunching ? 'menu-launching' : ''}`}>
+      <div className={`menu-command menu-mode-${gameMode} min-h-screen overflow-hidden bg-slate-950 text-slate-100 tactical-grid ${isLaunching ? 'menu-launching' : ''}`}>
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-10 lg:py-10">
         <div className="menu-pulse pointer-events-none absolute -left-20 top-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="menu-float pointer-events-none absolute right-[34%] top-16 hidden h-24 w-24 rounded-full border border-cyan-300/10 bg-cyan-400/5 blur-[1px] lg:block" />
@@ -498,7 +501,6 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => setCreatorsOpen(true)} className="flex items-center gap-2 rounded-xl border border-violet-800/70 bg-slate-950/60 px-3 py-2 text-xs text-slate-300 transition hover:border-violet-400/70 hover:text-white"><Users className="h-4 w-4 text-violet-300" /> Criadores</button>
-              <button type="button" onClick={openTutorial} className="flex items-center gap-2 rounded-xl border border-sky-800/70 bg-slate-950/60 px-3 py-2 text-xs text-slate-300 transition hover:border-cyan-400/70 hover:text-white"><BookOpen className="h-4 w-4 text-cyan-300" /> Como jogar</button>
             </div>
           </header>
 
@@ -518,7 +520,7 @@ export default function Home() {
                   const details = MODE_DETAILS[mode];
                   const Icon = details.icon;
                   const selected = gameMode === mode;
-                  return <button key={mode} type="button" onClick={() => setGameMode(mode)} className={`card-sheen group rounded-2xl border p-4 text-left transition-all duration-300 hover:-translate-y-1.5 ${selected ? 'border-cyan-400/70 bg-cyan-400/10 shadow-xl shadow-cyan-500/15 ring-1 ring-cyan-400/20' : 'border-slate-800 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/75'}`}><div className="flex items-start justify-between"><span className={`rounded-xl p-2.5 transition-transform duration-300 group-hover:scale-110 ${selected ? 'bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'bg-slate-800/70 text-slate-400'}`}><Icon className="h-5 w-5" /></span>{selected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[9px] font-mono uppercase text-emerald-300">selecionado</span>}</div><p className="mt-4 font-bold text-white">{details.title}</p><p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300/80">{details.subtitle}</p><p className="mt-3 text-xs leading-relaxed text-slate-400">{details.description}</p><div className={`mt-4 h-px w-2/3 bg-gradient-to-r ${selected ? 'from-cyan-300/70' : 'from-slate-700'} to-transparent`} /></button>;
+                  return <button key={mode} type="button" onClick={() => setGameMode(mode)} className={`card-sheen group rounded-2xl border p-4 text-left transition-all duration-300 hover:-translate-y-1.5 ${selected ? 'border-cyan-400/70 bg-cyan-400/10 shadow-xl shadow-cyan-500/15 ring-1 ring-cyan-400/20' : 'border-slate-800 bg-slate-950/60 hover:border-slate-600 hover:bg-slate-900/75'}`}><div className="flex items-start justify-between"><span className={`rounded-xl p-2.5 transition-transform duration-300 group-hover:scale-110 ${selected ? 'bg-cyan-400/15 text-cyan-200 shadow-lg shadow-cyan-500/10' : 'bg-slate-800/70 text-slate-400'}`}><Icon className="h-5 w-5" /></span>{selected && <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[9px] font-mono uppercase text-emerald-300">selecionado</span>}</div><p className="mt-4 font-bold text-white">{details.title}</p><p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-cyan-300/80">{details.subtitle}</p><p className="mt-3 text-xs leading-relaxed text-slate-400">{details.description}</p><p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">{details.focus}</p><div className={`mt-4 h-px w-2/3 bg-gradient-to-r ${selected ? 'from-cyan-300/70' : 'from-slate-700'} to-transparent`} /></button>;
                 })}
               </div>
               <Button disabled={isLaunching} onClick={() => startGame(gameMode)} className="mt-5 h-12 w-full gap-2 bg-gradient-to-r from-cyan-500 to-sky-500 font-bold text-slate-950 shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-sky-400 disabled:opacity-80">{isLaunching ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-950" /> Inicializando centro de comando...</> : <><Crosshair className="h-4 w-4" /> Iniciar {MODE_DETAILS[gameMode].title}</>}</Button>
@@ -529,7 +531,7 @@ export default function Home() {
 
         {isLaunching && <div className="launch-overlay fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/95"><div className="launch-core text-center"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-cyan-300/60 bg-cyan-400/10 shadow-[0_0_80px_rgba(34,211,238,0.35)]"><span className="h-5 w-5 animate-ping rounded-full bg-cyan-300" /></div><p className="mt-6 text-[10px] font-mono uppercase tracking-[0.35em] text-cyan-300">Estabelecendo enlace planetário</p><div className="mx-auto mt-4 h-1 w-56 overflow-hidden rounded-full bg-slate-800"><div className="launch-progress h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-300" /></div><p className="mt-3 text-xs text-slate-500">Carregando {MODE_DETAILS[gameMode].title} · sincronizando dados territoriais</p></div></div>}
 
-        {creatorsOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"><div className="w-full max-w-4xl rounded-3xl border border-violet-800/60 bg-slate-950 p-6 shadow-2xl shadow-violet-950/40 sm:p-8"><div className="flex items-start justify-between"><div><p className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-violet-300"><Users className="h-4 w-4" /> Créditos da equipe</p><h2 className="mt-2 text-3xl font-black tracking-tight text-white">Os criadores do GeoCrisis</h2><p className="mt-2 text-sm text-slate-400">As pessoas por trás da missão de proteger o planeta.</p></div><button type="button" onClick={() => setCreatorsOpen(false)} className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{CREATORS.map((creator, index) => <div key={creator.name} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition hover:-translate-y-1 hover:border-violet-400/50"><div className={`flex h-12 w-12 items-center justify-center rounded-xl border text-sm font-black ${creator.tone}`}>{creator.initials}</div><p className="mt-4 text-sm font-bold text-white">{creator.name}</p><p className="mt-1 text-[10px] font-mono uppercase leading-relaxed tracking-wider text-violet-300/80">{creator.role}</p><span className="mt-4 block text-[9px] font-mono text-slate-600">0{index + 1} / TEAM</span></div>)}</div><div className="mt-6 flex items-center gap-3 rounded-2xl border border-violet-900/50 bg-violet-950/15 p-4"><Sparkles className="h-5 w-5 shrink-0 text-violet-300" /><p className="text-xs text-slate-400">Ciência, criatividade e tecnologia reunidas em uma experiência de decisões reais.</p></div></div></div>}
+        {creatorsOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"><div className="w-full max-w-5xl rounded-3xl border border-violet-800/60 bg-slate-950 p-6 shadow-2xl shadow-violet-950/40 sm:p-8"><div className="flex items-start justify-between"><div><p className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-violet-300"><Users className="h-4 w-4" /> Equipe GeoCrisis · 06 integrantes</p><h2 className="mt-2 text-3xl font-black tracking-tight text-white">Criadores da missão</h2><p className="mt-2 text-sm text-slate-400">Cada frente combina ciência, estratégia, tecnologia e experiência.</p></div><button type="button" onClick={() => setCreatorsOpen(false)} className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">{CREATORS.map((creator, index) => <div key={creator.name} className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition hover:-translate-y-1 hover:border-violet-400/50"><div className={`flex h-12 w-12 items-center justify-center rounded-xl border text-sm font-black transition-transform group-hover:scale-110 ${creator.tone}`}>{creator.initials}</div><p className="mt-4 text-sm font-bold text-white">{creator.name}</p><p className="mt-1 text-[10px] font-mono uppercase leading-relaxed tracking-wider text-violet-300/80">{creator.role}</p><span className="mt-4 block text-[9px] font-mono text-slate-600">0{index + 1} / TEAM</span></div>)}</div><div className="mt-6 flex items-center gap-3 rounded-2xl border border-violet-900/50 bg-violet-950/15 p-4"><Sparkles className="h-5 w-5 shrink-0 text-violet-300" /><p className="text-xs text-slate-400">Ciência, criatividade e tecnologia reunidas em uma experiência de decisões reais.</p></div></div></div>}
 
         {tutorialOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-cyan-800/60 bg-slate-950 p-6 shadow-2xl shadow-cyan-950/40"><div className="flex items-start justify-between"><div><p className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-300">Protocolo de iniciação</p><h2 className="mt-1 text-2xl font-bold text-white">Como jogar GeoCrisis</h2></div><button type="button" onClick={() => setTutorialOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-800 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-6 grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border border-sky-900/60 bg-sky-950/20 p-4"><span className="text-2xl">01</span><p className="mt-3 font-bold text-white">Leia o território</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Use o Mapa para localizar cada crise e entender seus conceitos geográficos.</p></div><div className="rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4"><span className="text-2xl">02</span><p className="mt-3 font-bold text-white">Escolha uma carta</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Compare custo, população, sustentabilidade e XP. Categorias diferentes ativam sinergias.</p></div><div className="rounded-2xl border border-emerald-900/60 bg-emerald-950/20 p-4"><span className="text-2xl">03</span><p className="mt-3 font-bold text-white">Construa recursos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Na Economia, resgate oportunidades, aceite contratos e invista no mercado dinâmico.</p></div><div className="rounded-2xl border border-rose-900/60 bg-rose-950/20 p-4"><span className="text-2xl">04</span><p className="mt-3 font-bold text-white">Aceite os eventos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Crises inesperadas mudam o cenário. Preserve vidas e mantenha o equilíbrio do sistema.</p></div></div><Button onClick={() => setTutorialOpen(false)} className="mt-6 w-full bg-cyan-500 text-slate-950 hover:bg-cyan-400">Entendi, iniciar operação</Button></div></div>}
       </div>
@@ -693,8 +695,8 @@ export default function Home() {
           <details open className={`${activeModule !== 'economy' ? 'hidden' : ''} group rounded-2xl border border-amber-900/50 bg-slate-950/30 p-3 shadow-inner shadow-amber-950/10`}>
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-1 py-1 marker:hidden">
               <div>
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300"><DollarSign className="h-3.5 w-3.5" /> Finanças & estratégia</div>
-                <p className="mt-1 text-xs text-slate-400">Receitas, contratos e investimentos da rodada</p>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-300"><Coins className="h-3.5 w-3.5" /> Economia · 3 frentes</div>
+                <p className="mt-1 text-xs text-slate-400">Ganhe recursos · aceite riscos · invista no mercado</p>
               </div>
               <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[9px] font-mono text-amber-200 transition-transform group-open:rotate-180">⌄</span>
             </summary>
@@ -956,6 +958,7 @@ export default function Home() {
           title={activeEvent.title}
           description={activeEvent.description}
           impact={activeEvent.impact}
+          crisisCategory={currentCrisis.category}
           onAcknowledge={handleAcknowledgeEvent}
         />
       )}

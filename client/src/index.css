@@ -176,6 +176,17 @@
   .game-command { --command-accent: #38bdf8; --command-secondary: #a78bfa; }
   .menu-command .glass-panel { border-color: rgba(45, 212, 191, 0.28); }
   .game-command .glass-panel { border-color: rgba(56, 189, 248, 0.24); }
+  .menu-mode-campaign .menu-planet { animation: modeCampaign 5s ease-in-out infinite; }
+  .menu-mode-survival .menu-planet { animation: modeSurvival 1.4s ease-in-out infinite; }
+  .menu-mode-sandbox .menu-planet { animation: modeSandbox 4s ease-in-out infinite; }
+  .menu-mode-speedrun .menu-planet { animation: modeSpeedrun 900ms linear infinite; }
+  .menu-mode-survival .menu-pulse { background-color: rgba(244, 63, 94, 0.18); }
+  .menu-mode-sandbox .menu-pulse { background-color: rgba(16, 185, 129, 0.18); }
+  .menu-mode-speedrun .menu-pulse { background-color: rgba(245, 158, 11, 0.18); }
+  @keyframes modeCampaign { 50% { transform: scale(1.06) rotate(5deg); box-shadow: 0 0 42px rgba(34, 211, 238, .28); } }
+  @keyframes modeSurvival { 50% { transform: scale(.9); box-shadow: 0 0 55px rgba(244, 63, 94, .4); } }
+  @keyframes modeSandbox { 50% { transform: scale(1.12) rotate(-8deg); box-shadow: 0 0 48px rgba(16, 185, 129, .35); } }
+  @keyframes modeSpeedrun { to { transform: rotate(360deg); box-shadow: 0 0 38px rgba(245, 158, 11, .35); } }
 
   .glass-panel {
     position: relative;

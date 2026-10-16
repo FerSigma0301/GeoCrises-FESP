@@ -14,6 +14,7 @@ interface EventCardModalProps {
   };
   isOpen: boolean;
   onAcknowledge: () => void;
+  crisisCategory?: string;
 }
 
 export default function EventCardModal({
@@ -21,9 +22,12 @@ export default function EventCardModal({
   description,
   impact,
   isOpen,
-  onAcknowledge
+  onAcknowledge,
+  crisisCategory = 'default'
 }: EventCardModalProps) {
   if (!isOpen) return null;
+  const crisisTone: Record<string, string> = { flood: 'text-sky-300', drought: 'text-amber-300', wildfire: 'text-orange-300', heatwave: 'text-rose-300', deforestation: 'text-emerald-300', sealevel: 'text-cyan-300', earthquake: 'text-stone-300', pollution: 'text-lime-300', pandemic: 'text-violet-300', biodiversity: 'text-green-300', energy: 'text-yellow-300', ocean: 'text-blue-300', cyber: 'text-fuchsia-300', food: 'text-red-300', default: 'text-purple-300' };
+  const arrowTone = crisisTone[crisisCategory] || crisisTone.default;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
@@ -50,19 +54,19 @@ export default function EventCardModal({
           <div className="grid grid-cols-2 gap-2 font-mono">
             {impact.finance !== undefined && (
               <div className="flex items-center gap-1.5 text-rose-400">
-                <TrendingDown className="w-3.5 h-3.5" />
+                <TrendingDown className={`w-3.5 h-3.5 ${arrowTone}`} />
                 <span>Finanças: {impact.finance} pts</span>
               </div>
             )}
             {impact.population !== undefined && (
               <div className="flex items-center gap-1.5 text-rose-400">
-                <TrendingDown className="w-3.5 h-3.5" />
+                <TrendingDown className={`w-3.5 h-3.5 ${arrowTone}`} />
                 <span>População: {impact.population} pts</span>
               </div>
             )}
             {impact.sustainability !== undefined && (
               <div className="flex items-center gap-1.5 text-rose-400">
-                <TrendingDown className="w-3.5 h-3.5" />
+                <TrendingDown className={`w-3.5 h-3.5 ${arrowTone}`} />
                 <span>Sustentabilidade: {impact.sustainability} pts</span>
               </div>
             )}
